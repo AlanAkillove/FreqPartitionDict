@@ -130,13 +130,13 @@ TEST(FreqPartitionDictTest, Statistics) {
     dict.insert(1, "one");
     dict.insert(2, "two");
 
-    // 访问 key=1 三次（一次冷区，两次热区）
-    dict.get(1);
-    dict.get(1);
-    dict.get(1);
+    // 访问 key=1 三次（第一次冷区，第二次晋升，第三次热区）
+    dict.get(1);  // 冷区命中
+    dict.get(1);  // 冷区命中并晋升
+    dict.get(1);  // 热区命中
 
-    EXPECT_EQ(dict.hot_hits(), 2);
-    EXPECT_EQ(dict.cold_hits(), 1);
+    EXPECT_EQ(dict.cold_hits(), 2);  // 前两次是冷区命中
+    EXPECT_EQ(dict.hot_hits(), 1);   // 第三次是热区命中
     EXPECT_EQ(dict.total_hit_rate(), 1.0);
 
     dict.reset_stats();

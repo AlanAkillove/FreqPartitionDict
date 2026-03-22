@@ -22,6 +22,11 @@ private:
     size_t demotions_ = 0;
 
     void promote(const K& key) {
+        // 如果热区容量为0，不执行晋升
+        if (hot_capacity_ == 0) {
+            return;
+        }
+
         V value = cold_zone_.at(key);
         size_t freq = cold_zone_.get_freq(key);
         cold_zone_.erase(key);
@@ -57,6 +62,10 @@ public:
 
             if (cold_zone_.should_promote(key, promote_threshold_)) {
                 promote(key);
+                // 晋升后从热区返回值（如果热区容量为0，则仍在冷区）
+                if (hot_capacity_ > 0) {
+                    return hot_zone_.at(key);
+                }
             }
             return cold_zone_.at(key);
         }
