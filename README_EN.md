@@ -128,23 +128,23 @@ Where n is the total number of elements. Under skewed access patterns (e.g., Zip
 
 ### Test Environment
 
-- **CPU**: Intel Core i7-12700H (14 cores, 20 threads)
-- **Memory**: 16 GB DDR5-4800
+- **CPU**: 16 cores @ 2.688 GHz, L3 cache: 24 MB
 - **Compiler**: GCC 13.2
 - **Optimization**: -O3 (Release mode)
-- **Statistical Method**: 10 independent repetitions, reporting 95% confidence intervals
 
 ### Key Findings
 
 Under skewed workloads (Zipf α ≥ 1.2), FreqPartitionDict achieves near hash table performance:
 
-| Configuration | Mean Latency | 95% CI | CV (%) | vs. Hash Table |
-|---------------|--------------|--------|--------|----------------|
-| std::unordered_map | 4.7 ns | [4.55, 4.83] | 2.45 | 1.0× |
-| std::map | 18.4 ns | [17.74, 19.09] | 2.95 | 3.9× |
-| FreqPartitionDict (α=0.5) | 564 ns | [555, 573] | 2.33 | 120.0× |
-| FreqPartitionDict (α=1.0) | 295 ns | [289, 301] | 2.13 | 62.8× |
-| FreqPartitionDict (α=1.5) | **24.3 ns** | **[24.0, 24.6]** | **1.26** | **5.2×** |
+| Configuration | Mean Latency | vs. Hash Table |
+|---------------|--------------|----------------|
+| std::unordered_map | 4.9 ns | 1.0× |
+| std::map | 18.4 ns | 3.8× |
+| FreqPartitionDict (α=0.5) | 562.5 ns | 114.3× |
+| FreqPartitionDict (α=0.8) | 455.1 ns | 92.5× |
+| FreqPartitionDict (α=1.0) | 311.5 ns | 63.4× |
+| FreqPartitionDict (α=1.2) | 156.9 ns | 31.9× |
+| FreqPartitionDict (α=1.5) | **25.1 ns** | **5.1×** |
 
 ### Workload Skewness Impact
 
@@ -169,9 +169,9 @@ Critical phase transition at capacity 64:
 
 | Operation | std::unordered_map | std::map | FreqPartitionDict (α=1.5) |
 |-----------|-------------------|----------|---------------------------|
-| Lookup | 5 ns | 18 ns | 24 ns |
-| Insert | 97 ns | 89 ns | 114 ns |
-| Delete | 78 ns | 72 ns | 95 ns |
+| Lookup | 4.9 ns | 18.4 ns | 25.1 ns |
+| Insert | 47.9 ns | 90.0 ns | 136.7 ns |
+| Delete | - | - | - |
 
 ### Cache Algorithm Comparison
 

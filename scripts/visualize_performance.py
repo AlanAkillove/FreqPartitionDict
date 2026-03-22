@@ -39,9 +39,7 @@ def extract_mean_data(benchmarks):
     data = {}
     for bm in benchmarks:
         name = bm['name']
-        if 'mean' in name:
-            base_name = name.replace('_mean', '')
-            data[base_name] = bm['cpu_time']
+        data[name] = bm['cpu_time']
     return data
 
 def plot_zipf_comparison(data, output_dir):
@@ -52,12 +50,17 @@ def plot_zipf_comparison(data, output_dir):
     zipf_data = {}
     for name, time in data.items():
         if 'ZipfAlpha' in name:
-            # 提取alpha值
-            alpha = float(name.split('/')[-1])
+            # 提取alpha值 (格式: BM_FreqPartitionDict_ZipfAlpha/15 -> 1.5)
+            alpha_raw = float(name.split('/')[-1])
+            alpha = alpha_raw / 10.0  # 转换为实际值
             zipf_data[alpha] = time
     
     alphas = sorted(zipf_data.keys())
     times = [zipf_data[a] for a in alphas]
+    
+    if len(times) == 0:
+        print("Warning: No ZipfAlpha data found, skipping figure 1")
+        return
     
     # 绘制曲线
     ax.plot(alphas, times, 'o-', linewidth=2, markersize=8, 
