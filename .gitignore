@@ -42,3 +42,7 @@ Thumbs.db
 *.tmp
 *.temp
 *.log
+
+# Paper files (not for GitHub)
+docs/TECHNICAL_PAPER_CN.md
+docs/TECHNICAL_PAPER_EN.md
