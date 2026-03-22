@@ -44,5 +44,4 @@ Thumbs.db
 *.log
 
 # Paper files (not for GitHub)
-docs/TECHNICAL_PAPER_CN.md
-docs/TECHNICAL_PAPER_EN.md
+docs/
