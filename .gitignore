@@ -45,3 +45,6 @@ Thumbs.db
 
 # Paper files (not for GitHub)
 docs/
+
+# Development notes
+IMPROVEMENT_PLAN.md
