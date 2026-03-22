@@ -1,2 +1,5 @@
 add_executable(benchmark_fpd benchmark.cpp)
 target_link_libraries(benchmark_fpd freq_partition_dict benchmark::benchmark)
+
+add_executable(benchmark_cache_comparison benchmark_cache_comparison.cpp)
+target_link_libraries(benchmark_cache_comparison freq_partition_dict)

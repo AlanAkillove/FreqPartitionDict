@@ -365,6 +365,69 @@ To evaluate the space efficiency of FreqPartitionDict, we measured memory usage 
 - For memory-sensitive scenarios, reduce hot zone capacity to 5% of working set
 - Use `memory_usage()` method to monitor actual memory consumption
 
+### 10.4 Cache Algorithm Comparison
+
+To comprehensively evaluate FreqPartitionDict against traditional cache algorithms, we implemented LRU and LFU caches as comparison baselines.
+
+**Experimental Design**:
+- Data size: N = 10,000 items
+- Cache capacity: 128 (hot zone capacity)
+- Operations: 100,000
+- Workload: Zipf distribution (α ∈ {0.5, 0.8, 1.0, 1.2, 1.5})
+
+**Important Note**: FreqPartitionDict is a dictionary + cache hybrid that stores ALL data; LRU/LFU are pure caches with limited capacity.
+
+#### 10.4.1 Hit Rate Comparison
+
+| Zipf α | FreqPartitionDict | LRU (128) | LFU (128) | LRU (256) | LFU (256) |
+|--------|-------------------|-----------|-----------|-----------|-----------|
+| 0.5 | **100%** | 2.9% | 1.4% | 5.8% | 2.8% |
+| 0.8 | **100%** | 13.5% | 1.6% | 25.6% | 3.2% |
+| 1.0 | **100%** | 40.5% | 6.3% | 48.3% | 8.4% |
+| 1.2 | **100%** | 64.9% | 1.3% | 76.2% | 4.5% |
+| 1.5 | **100%** | 88.8% | 39.8% | 91.8% | 6.0% |
+
+*Table 5: Hit rate comparison. FreqPartitionDict stores all data, hence 100% hit rate.*
+
+#### 10.4.2 Lookup Latency Comparison
+
+| Zipf α | FreqPartitionDict | LRU (128) | LFU (128) |
+|--------|-------------------|-----------|-----------|
+| 0.5 | 69.5 ms | **0.96 ms** | 0.36 ms |
+| 0.8 | 53.1 ms | **1.20 ms** | 0.35 ms |
+| 1.0 | 33.0 ms | **1.26 ms** | 0.42 ms |
+| 1.2 | 17.6 ms | **1.02 ms** | 0.30 ms |
+| 1.5 | **4.66 ms** | 0.83 ms | 0.68 ms |
+
+*Table 6: Lookup latency comparison (100,000 operations). LRU/LFU have lower latency but also lower hit rates.*
+
+#### 10.4.3 Key Findings
+
+1. **Fundamental Difference**: FreqPartitionDict is a dictionary (stores all data) + hot zone optimization, while LRU/LFU are pure caches (limited capacity). They serve different use cases.
+
+2. **Hit Rate Advantage**: FreqPartitionDict maintains 100% hit rate since all data is in the structure. LRU achieves 88.8% at high skew (α = 1.5), but drops sharply at lower skew.
+
+3. **Latency Trade-off**: LRU/LFU have lower latency, but at the cost of many cache misses. In real applications, cache misses may trigger expensive backend queries.
+
+4. **Use Cases**:
+   - **FreqPartitionDict**: Scenarios requiring storage of all data with optimized hot data access
+   - **LRU/LFU**: Memory-constrained scenarios where cache misses are acceptable
+
+#### 10.4.4 Workload Shift Test
+
+Simulating sudden hotspot change:
+- Phase 1: Access hotspot A (keys 0-99), 50,000 operations
+- Phase 2: Access hotspot B (keys 1000-1099), 50,000 operations
+
+| Phase | FreqPartitionDict | LRU (256) | LFU (256) |
+|-------|-------------------|-----------|-----------|
+| Phase 1 | 100% | 100% | 100% |
+| Phase 2 | 100% | 100% | 100% |
+
+*Table 7: Workload shift test results. Since hotspot range is smaller than cache capacity, all algorithms adapt quickly.*
+
+**Conclusion**: When hotspot range is smaller than cache capacity, LRU adapts quickly to changes; FreqPartitionDict maintains 100% hit rate regardless of hotspot changes.
+
 ---
 
 ## Appendix A: Theoretical Analysis
