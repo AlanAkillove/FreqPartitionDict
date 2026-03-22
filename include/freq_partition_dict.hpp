@@ -3,6 +3,7 @@
 #include "hot_zone.hpp"
 #include "cold_zone.hpp"
 #include <optional>
+#include <vector>
 #include <cstddef>
 
 namespace fpd {

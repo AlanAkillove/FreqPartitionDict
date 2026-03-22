@@ -100,9 +100,9 @@ The experimental baselines include std::unordered_map (standard hash table with 
 
 *Figure 1: Lookup latency versus Zipf α parameter (Release mode, -O3). Lower values indicate better performance. Error bars represent standard deviation across 5 repetitions.*
 
-Figure 1 demonstrates a strong inverse relationship between workload skewness and lookup latency. As α increases from 0.5 to 1.5, latency decreases by approximately **95%** (553 ns → 25 ns) with 95% confidence intervals [543, 564] ns and [24.0, 26.5] ns, respectively. The coefficient of variation (CV) across all tests remains below 4%, indicating high measurement stability.
+Figure 1 demonstrates a strong inverse relationship between workload skewness and lookup latency. As α increases from 0.5 to 1.5, latency decreases by approximately **96%** (564 ns → 24 ns) with 95% confidence intervals [555, 573] ns and [24.0, 24.6] ns, respectively. The coefficient of variation (CV) across all tests remains below 4%, indicating high measurement stability.
 
-This improvement stems from two interrelated mechanisms. First, higher α concentrates accesses on fewer items, increasing the probability that requested data resides in the O(1) hot zone—termed increased hot zone hit rate. Second, with fewer unique items accessed, the effective cold zone size shrinks, improving cache efficiency—termed reduced cold zone pressure. At α = 1.5, FreqPartitionDict achieves latency approaching std::unordered_map (25 ns vs. 5 ns), while providing the additional benefit of frequency-based data organization absent in standard containers.
+This improvement stems from two interrelated mechanisms. First, higher α concentrates accesses on fewer items, increasing the probability that requested data resides in the O(1) hot zone—termed increased hot zone hit rate. Second, with fewer unique items accessed, the effective cold zone size shrinks, improving cache efficiency—termed reduced cold zone pressure. At α = 1.5, FreqPartitionDict achieves latency approaching std::unordered_map (24 ns vs. 5 ns), while providing the additional benefit of frequency-based data organization absent in standard containers.
 
 ### 5.2 Hot Zone Capacity Analysis
 
@@ -118,7 +118,7 @@ Figure 2 reveals a critical phase transition at H = 64. The hit rate increases s
 
 *Figure 3: Latency comparison across operation types (Release mode). Values annotated above bars indicate mean latency in nanoseconds.*
 
-Regarding lookup performance, under Zipfian access (α = 1.0), FreqPartitionDict achieves 274 ns versus std::map at 18 ns, reflecting overhead for frequency tracking; under highly skewed conditions (α = 1.5), FreqPartitionDict (25 ns) approaches std::unordered_map (5 ns). For insertion performance, all structures show comparable insertion costs, with FreqPartitionDict (122 ns) falling between std::unordered_map (97 ns) and std::map (94 ns).
+Regarding lookup performance, under Zipfian access (α = 1.0), FreqPartitionDict achieves 295 ns versus std::map at 18 ns, reflecting overhead for frequency tracking; under highly skewed conditions (α = 1.5), FreqPartitionDict (24 ns) approaches std::unordered_map (5 ns). For insertion performance, all structures show comparable insertion costs, with FreqPartitionDict (114 ns) falling between std::unordered_map (97 ns) and std::map (89 ns).
 
 ---
 
@@ -128,9 +128,9 @@ Regarding lookup performance, under Zipfian access (α = 1.0), FreqPartitionDict
 |--------------|--------------|--------|--------|----------|----------|
 | std::unordered_map | 4.7 ns | [4.55, 4.83] | 2.45 | 1.0× | 0.26× |
 | std::map | 18.4 ns | [17.74, 19.09] | 2.95 | 3.9× | 1.0× |
-| FreqPartitionDict (α = 0.5) | 553 ns | [543, 564] | 1.55 | 117.7× | 30.1× |
-| FreqPartitionDict (α = 1.0) | 306 ns | [299, 314] | 2.00 | 65.1× | 16.6× |
-| FreqPartitionDict (α = 1.5) | **25.3 ns** | **[24.0, 26.5]** | **3.93** | **5.4×** | **1.4×** |
+| FreqPartitionDict (α = 0.5) | 564 ns | [555, 573] | 2.33 | 120.0× | 30.7× |
+| FreqPartitionDict (α = 1.0) | 295 ns | [289, 301] | 2.13 | 62.8× | 16.0× |
+| FreqPartitionDict (α = 1.5) | **24.3 ns** | **[24.0, 24.6]** | **1.26** | **5.2×** | **1.3×** |
 
 *Table 3: Lookup latency under varying workload skewness (Release mode, H = 128, n = 10 repetitions). CV = coefficient of variation. Best FreqPartitionDict results in bold.*
 
@@ -154,7 +154,7 @@ The current implementation has several limitations. First, the baseline version 
 
 ## 8. Conclusion
 
-FreqPartitionDict demonstrates that incorporating access frequency awareness into dictionary design yields significant benefits for skewed workloads. Our evaluation shows that under realistic access patterns (Zipf α = 1.5), the structure achieves latency approaching hash tables (25 ns vs. 5 ns) while maintaining O(log n) worst-case guarantees and providing valuable frequency-based organization for analytics and cache management. The key insight is that workload characteristics profoundly impact data structure performance: no single implementation dominates all scenarios, but hybrid approaches that adapt to observed patterns can bridge the gap between theoretical complexity and practical efficiency.
+FreqPartitionDict demonstrates that incorporating access frequency awareness into dictionary design yields significant benefits for skewed workloads. Our evaluation shows that under realistic access patterns (Zipf α = 1.5), the structure achieves latency approaching hash tables (24 ns vs. 5 ns) while maintaining O(log n) worst-case guarantees and providing valuable frequency-based organization for analytics and cache management. The key insight is that workload characteristics profoundly impact data structure performance: no single implementation dominates all scenarios, but hybrid approaches that adapt to observed patterns can bridge the gap between theoretical complexity and practical efficiency.
 
 ---
 
@@ -230,9 +230,9 @@ To evaluate the space efficiency of FreqPartitionDict, we measured memory usage 
 
 To comprehensively evaluate FreqPartitionDict against traditional cache algorithms, we implemented LRU and LFU caches as comparison baselines. The experimental configuration used data size N = 10,000 items, cache capacity 128 (hot zone capacity), 100,000 operations, and Zipf distribution workload (α ∈ {0.5, 0.8, 1.0, 1.2, 1.5}). It is important to note that FreqPartitionDict is a dictionary plus cache hybrid storing all data, while LRU/LFU are pure caches with limited capacity, representing fundamentally different application scenarios.
 
-Hit rate comparison experiments showed FreqPartitionDict maintaining 100% hit rate across all skewness levels. LRU (128) achieved 2.9% hit rate at α = 0.5, increasing to 88.8% at α = 1.5. LFU (128) showed overall lower hit rates, reaching only 39.8% at α = 1.5. When cache capacity expanded to 256, LRU hit rates improved moderately while LFU improvement was limited.
+Hit rate comparison experiments showed FreqPartitionDict maintaining 100% hit rate across all skewness levels. LRU (128) achieved 2.9% hit rate at α = 0.5, increasing to 88.8% at α = 1.5. LFU (128) showed overall lower hit rates, reaching only 39.8% at α = 1.5. When cache capacity expanded to 256, LRU hit rates improved moderately (91.8% at α = 1.5) while LFU improvement was limited (only 6.0%).
 
-Lookup latency comparison showed LRU/LFU generally having lower latency than FreqPartitionDict, but this directly correlates with their lower hit rates. At α = 1.5, FreqPartitionDict latency was 4.66 ms, approaching LRU's 0.83 ms. In practical applications, cache misses may trigger expensive backend queries, making pure latency comparisons potentially misleading.
+Lookup latency comparison showed LRU/LFU generally having lower latency than FreqPartitionDict, but this directly correlates with their lower hit rates. At α = 1.5, FreqPartitionDict latency was 4.81 ms, approaching LRU's 0.94 ms. In practical applications, cache misses may trigger expensive backend queries, making pure latency comparisons potentially misleading.
 
 Workload mutation testing simulated sudden hotspot changes with Phase 1 accessing hotspot A (keys 0-99) for 50,000 operations and Phase 2 accessing hotspot B (keys 1000-1099) for 50,000 operations. Since hotspot ranges were smaller than cache capacity, all algorithms achieved 100% hit rate in both phases. When hotspot range is smaller than cache capacity, LRU adapts quickly to changes; FreqPartitionDict maintains 100% hit rate regardless of hotspot changes.
 
@@ -244,7 +244,7 @@ Hot zone capacity experiments (α = 1.2, threshold = 3, N = 10,000) showed capac
 
 ### 10.6 Long-Term Stability Testing
 
-To verify FreqPartitionDict stability during extended operation, we executed a continuous test of 1,000,000 operations. The test configuration used data size N = 10,000, hot zone capacity H = 128, promotion threshold τ = 3, and Zipf α = 1.2 workload. Results showed minimum and maximum hit rates both at 100.00%, with hit rate standard deviation of 0.00% rated EXCELLENT. The promotion/demotion ratio was 1.00, indicating perfect balance. Throughput was 1,475 ops/sec with stable performance. Hit rate remained at 100% throughout the test without fluctuation, and perfectly balanced promotion and demotion operations indicated healthy hot zone management with stable memory usage showing no signs of leakage.
+To verify FreqPartitionDict stability during extended operation, we executed a continuous test of 1,000,000 operations. The test configuration used data size N = 10,000, hot zone capacity H = 128, promotion threshold τ = 3, and Zipf α = 1.2 workload. Results showed minimum and maximum hit rates both at 100.00%, with hit rate standard deviation of 0.00% rated EXCELLENT. The promotion/demotion ratio was 1.00, indicating perfect balance. Throughput was 1,463 ops/sec with stable performance. Hit rate remained at 100% throughout the test without fluctuation, and perfectly balanced promotion and demotion operations indicated healthy hot zone management with stable memory usage showing no signs of leakage.
 
 ### 10.7 Batch Operation Optimization
 
