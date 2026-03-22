@@ -1,0 +1,5 @@
+add_executable(basic_usage basic_usage.cpp)
+target_link_libraries(basic_usage freq_partition_dict)
+
+add_executable(zipf_demo zipf_demo.cpp)
+target_link_libraries(zipf_demo freq_partition_dict)

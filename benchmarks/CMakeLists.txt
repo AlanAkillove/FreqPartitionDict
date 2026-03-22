@@ -1,0 +1,2 @@
+add_executable(benchmark_fpd benchmark.cpp)
+target_link_libraries(benchmark_fpd freq_partition_dict benchmark::benchmark)

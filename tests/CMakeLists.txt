@@ -1,0 +1,9 @@
+add_executable(test_correctness test_correctness.cpp)
+target_link_libraries(test_correctness freq_partition_dict gtest_main)
+
+add_executable(test_properties test_properties.cpp)
+target_link_libraries(test_properties freq_partition_dict gtest_main)
+
+include(GoogleTest)
+gtest_discover_tests(test_correctness)
+gtest_discover_tests(test_properties)
