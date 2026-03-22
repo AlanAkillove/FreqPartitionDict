@@ -1,6 +1,10 @@
 # Frequency-Partitioned Dictionary: A Hybrid Data Structure for Skewed Workloads
 
-**Abstract.** This study presents a comprehensive performance evaluation of FreqPartitionDict, a hybrid dictionary structure that dynamically partitions data based on access frequency. Through extensive benchmarking on synthetic workloads with varying skewness characteristics, we demonstrate that the proposed structure achieves up to 5.8× speedup over standard ordered maps under highly skewed access patterns, while maintaining competitive performance for uniform distributions. Our analysis reveals critical insights into the relationship between workload characteristics, cache capacity configuration, and overall system performance.
+---
+
+## Abstract
+
+This study presents a comprehensive performance evaluation of FreqPartitionDict, a hybrid dictionary structure that dynamically partitions data based on access frequency. Through extensive benchmarking on synthetic workloads with varying skewness characteristics, we demonstrate that the proposed structure achieves up to 5.8× speedup over standard ordered maps under highly skewed access patterns, while maintaining competitive performance for uniform distributions. Our analysis reveals critical insights into the relationship between workload characteristics, cache capacity configuration, and overall system performance.
 
 ---
 
@@ -73,7 +77,7 @@ where α controls skewness: α = 0 yields uniform distribution, while higher val
 
 ### 4.1 Impact of Access Skewness
 
-![Figure 1: Zipf comparison](../results/figures/fig1_zipf_comparison.png)
+![Figure 1: Zipf comparison](https://github.com/AlanAkillove/FreqPartitionDict/raw/main/results/figures/fig1_zipf_comparison.png)
 
 *Figure 1: Lookup latency as a function of Zipf α parameter. Lower values indicate better performance. Reference lines show performance of standard containers.*
 
@@ -87,7 +91,7 @@ At α = 1.5, FreqPartitionDict achieves latency within 2× of std::unordered_map
 
 ### 4.2 Hot Zone Capacity Sizing
 
-![Figure 2: Capacity scaling](../results/figures/fig2_capacity_scaling.png)
+![Figure 2: Capacity scaling](https://github.com/AlanAkillove/FreqPartitionDict/raw/main/results/figures/fig2_capacity_scaling.png)
 
 *Figure 2: (a) Lookup latency and (b) hit rate as functions of hot zone capacity. The inflection point at capacity 64 indicates a phase transition in caching behavior.*
 
@@ -99,7 +103,7 @@ Figure 2 presents the critical relationship between hot zone capacity and system
 
 ### 4.3 Operation Type Comparison
 
-![Figure 3: Operation comparison](../results/figures/fig3_operation_comparison.png)
+![Figure 3: Operation comparison](https://github.com/AlanAkillove/FreqPartitionDict/raw/main/results/figures/fig3_operation_comparison.png)
 
 *Figure 3: Latency comparison across operation types and data structures. Values annotated above bars indicate mean latency in nanoseconds.*
 
