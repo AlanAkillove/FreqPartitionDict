@@ -8,17 +8,9 @@
 
 ## 1. Introduction
 
-Modern computing systems increasingly face data access patterns characterized by significant temporal and spatial locality. From web server logs to database query traces, empirical studies consistently demonstrate that a small fraction of data items account for a disproportionately large share of access requests—a phenomenon well-modeled by Zipfian distributions [1].
+Modern computing systems increasingly face data access patterns characterized by significant temporal and spatial locality. From web server logs to database query traces, empirical studies consistently demonstrate that a small fraction of data items account for a disproportionately large share of access requests—a phenomenon well-modeled by Zipfian distributions [1]. Traditional dictionary implementations face a fundamental trade-off: hash tables offer O(1) average-case lookup but poor cache locality and unpredictable iteration order; balanced trees provide O(log n) lookup with sorted iteration but suffer from pointer chasing overhead. Neither structure explicitly exploits access frequency information to optimize for skewed workloads.
 
-Traditional dictionary implementations face a fundamental trade-off: hash tables offer O(1) average-case lookup but poor cache locality and unpredictable iteration order; balanced trees provide O(log n) lookup with sorted iteration but suffer from pointer chasing overhead. Neither structure explicitly exploits access frequency information to optimize for skewed workloads.
-
-This work introduces **FreqPartitionDict**, a hybrid dictionary that maintains frequently accessed items in a high-performance hash-based "hot zone" while relegating cold data to a tree-based "cold zone." Our key contributions include:
-
-1. **Adaptive Architecture:** Automatic migration of items between zones based on observed access patterns, eliminating manual tuning.
-
-2. **Performance Characterization:** Comprehensive evaluation showing that under skewed workloads (Zipf α ≥ 1.2), FreqPartitionDict achieves latency approaching std::unordered_map while maintaining O(log n) worst-case bounds.
-
-3. **Configuration Guidelines:** Empirical analysis identifying optimal hot zone sizing (6–10% of working set) for maximizing hit rates.
+This work introduces **FreqPartitionDict**, a hybrid dictionary that maintains frequently accessed items in a high-performance hash-based "hot zone" while relegating cold data to a tree-based "cold zone." The structure employs an adaptive architecture that automatically migrates items between zones based on observed access patterns, eliminating the need for manual tuning. Our comprehensive evaluation demonstrates that under skewed workloads (Zipf α ≥ 1.2), FreqPartitionDict achieves latency approaching std::unordered_map while maintaining O(log n) worst-case bounds. Furthermore, empirical analysis identifies optimal hot zone sizing at 6–10% of the working set for maximizing hit rates.
 
 ---
 
@@ -26,9 +18,7 @@ This work introduces **FreqPartitionDict**, a hybrid dictionary that maintains f
 
 ### 2.1 Cache Eviction Policies
 
-Cache eviction is a classic problem in computer systems. LRU (Least Recently Used) [4] evicts the least recently used items based on temporal locality, simple to implement but ignores access frequency. LFU (Least Frequently Used) [5] evicts items with the lowest access count based on frequency locality, frequency-aware but struggles to adapt to workload changes.
-
-ARC (Adaptive Replacement Cache) [6] combines LRU and LFU advantages, maintaining two queues with dynamic policy adjustment, but has high implementation complexity. 2Q (Two-Queue) [2] prevents scan pollution through admission filtering, requiring multiple parameter tuning.
+Cache eviction is a classic problem in computer systems. LRU (Least Recently Used) [4] evicts the least recently used items based on temporal locality, offering simple implementation but ignoring access frequency. LFU (Least Frequently Used) [5] evicts items with the lowest access count based on frequency locality, providing frequency awareness but struggling to adapt to workload changes. ARC (Adaptive Replacement Cache) [6] combines LRU and LFU advantages by maintaining two queues with dynamic policy adjustment, though at the cost of high implementation complexity. 2Q (Two-Queue) [2] prevents scan pollution through admission filtering, requiring multiple parameter tuning.
 
 ### 2.2 Hybrid Data Structures
 
@@ -48,7 +38,7 @@ Count-Min Sketch [9] provides space-efficient frequency estimation with errors. 
 | 2Q | Admission+LRU | O(1) | Partial | Medium |
 | **FreqPartitionDict** | Frequency partition | O(1)~O(log n) | Yes | Medium |
 
-*Table 2: Cache policy comparison. FreqPartitionDict provides frequency awareness and O(log n) worst-case guarantee.*
+*Table 1: Cache policy comparison. FreqPartitionDict provides frequency awareness and O(log n) worst-case guarantee.*
 
 ---
 
@@ -56,15 +46,9 @@ Count-Min Sketch [9] provides space-efficient frequency estimation with errors. 
 
 ### 3.1 Architecture
 
-FreqPartitionDict employs a two-tier storage hierarchy (Figure 1):
+FreqPartitionDict employs a two-tier storage hierarchy (Figure 1). The hot zone is implemented as `std::unordered_map`, providing O(1) average-case lookup for high-frequency items, operating as a fixed-size cache with frequency-based eviction. The cold zone is implemented as `std::map` (red-black tree), offering O(log n) lookup for the long tail of infrequently accessed items, with the ordered structure enabling efficient range queries when needed.
 
-**Hot Zone.** Implemented as `std::unordered_map`, providing O(1) average-case lookup for high-frequency items. The hot zone operates as a fixed-size cache with frequency-based eviction.
-
-**Cold Zone.** Implemented as `std::map` (red-black tree), offering O(log n) lookup for the long tail of infrequently accessed items. The ordered structure enables efficient range queries when needed.
-
-**Promotion Policy.** Items accumulate access counts in the cold zone; upon reaching a configurable threshold (default: 3 accesses), they migrate to the hot zone. This threshold balances promotion agility against hot zone stability.
-
-**Eviction Policy.** When the hot zone reaches capacity, the item with minimum access frequency is demoted to the cold zone. The baseline implementation uses linear scanning (O(H)), while an optimized variant employs a min-heap for O(log H) eviction.
+Regarding promotion policy, items accumulate access counts in the cold zone; upon reaching a configurable threshold (default: 3 accesses), they migrate to the hot zone. This threshold balances promotion agility against hot zone stability. When the hot zone reaches capacity, the item with minimum access frequency is demoted to the cold zone. The baseline implementation uses linear scanning (O(H)), while an optimized variant employs a min-heap for O(log H) eviction.
 
 ### 3.2 Complexity Analysis
 
@@ -76,7 +60,7 @@ FreqPartitionDict employs a two-tier storage hierarchy (Figure 1):
 | Eviction (base) | O(H) | O(log n) | O(H) |
 | Eviction (optimized) | O(log H) | O(log n) | O(log H) |
 
-*Table 1: Time complexity of core operations. H denotes hot zone capacity.*
+*Table 2: Time complexity of core operations. H denotes hot zone capacity.*
 
 ---
 
@@ -84,13 +68,7 @@ FreqPartitionDict employs a two-tier storage hierarchy (Figure 1):
 
 ### 4.1 Environment
 
-All experiments are conducted in **Release mode** with full compiler optimizations:
-
-- **CPU:** Intel Core i7-12700H (14 cores, 20 threads)
-- **Memory:** 16 GB DDR5-4800
-- **Compiler:** GCC 13.2 with `-O3 -DNDEBUG`
-- **OS:** Windows 11 (WSL2)
-- **Build System:** CMake 3.14+ with MinGW Makefiles
+All experiments are conducted in **Release mode** with full compiler optimizations. The test platform includes Intel Core i7-12700H (14 cores, 20 threads) processor, 16 GB DDR5-4800 memory, GCC 13.2 compiler with `-O3 -DNDEBUG` optimization flags, Windows 11 (WSL2) operating system, and CMake 3.14+ build system with MinGW Makefiles.
 
 ### 4.2 Workload Characterization
 
@@ -102,27 +80,15 @@ where α controls skewness. We evaluate α ∈ {0.5, 0.8, 1.0, 1.2, 1.5} to cove
 
 ### 4.3 Statistical Rigor
 
-To ensure reproducibility and statistical validity:
-
-**Sample Size:** Each benchmark configuration executes 10 independent repetitions, with each repetition performing 100,000 operations. This sample size provides sufficient statistical power (1-β > 0.8) to detect meaningful performance differences.
-
-**Metrics Reported:** We report mean latency with 95% confidence intervals (CI) calculated using Student's t-distribution:
+To ensure reproducibility and statistical validity, each benchmark configuration executes 10 independent repetitions, with each repetition performing 100,000 operations. This sample size provides sufficient statistical power (1-β > 0.8) to detect meaningful performance differences. We report mean latency with 95% confidence intervals (CI) calculated using Student's t-distribution:
 
 $$CI = \bar{x} \pm t_{0.025, n-1} \cdot \frac{s}{\sqrt{n}}$$
 
-where $\bar{x}$ is the sample mean, $s$ is the sample standard deviation, and $n$ is the number of repetitions.
-
-**Variability Assessment:** We report the coefficient of variation (CV = σ/μ) to quantify relative variability. CV values below 5% indicate high measurement stability.
-
-**Significance Testing:** Pairwise comparisons between structures use independent two-sample t-tests with α = 0.05. All reported differences are statistically significant unless otherwise noted.
+where $\bar{x}$ is the sample mean, $s$ is the sample standard deviation, and $n$ is the number of repetitions. We also report the coefficient of variation (CV = σ/μ) to quantify relative variability, with CV values below 5% indicating high measurement stability. Pairwise comparisons between structures use independent two-sample t-tests with α = 0.05. All reported differences are statistically significant unless otherwise noted.
 
 ### 4.4 Baselines
 
-- **std::unordered_map:** Standard hash table (O(1) average lookup)
-- **std::map:** Red-black tree (O(log n) lookup)
-- **FreqPartitionDict:** Proposed structure (H = 128, threshold = 3)
-
-
+The experimental baselines include std::unordered_map (standard hash table with O(1) average lookup), std::map (red-black tree with O(log n) lookup), and our proposed FreqPartitionDict (H = 128, threshold = 3).
 
 ---
 
@@ -134,13 +100,9 @@ where $\bar{x}$ is the sample mean, $s$ is the sample standard deviation, and $n
 
 *Figure 1: Lookup latency versus Zipf α parameter (Release mode, -O3). Lower values indicate better performance. Error bars represent standard deviation across 5 repetitions.*
 
-Figure 1 demonstrates a strong inverse relationship between workload skewness and lookup latency. As α increases from 0.5 to 1.5, latency decreases by approximately **95%** (553 ns → 25 ns) with 95% confidence intervals [543, 564] ns and [24.0, 26.5] ns, respectively. The coefficient of variation (CV) across all tests remains below 4%, indicating high measurement stability. This improvement stems from:
+Figure 1 demonstrates a strong inverse relationship between workload skewness and lookup latency. As α increases from 0.5 to 1.5, latency decreases by approximately **95%** (553 ns → 25 ns) with 95% confidence intervals [543, 564] ns and [24.0, 26.5] ns, respectively. The coefficient of variation (CV) across all tests remains below 4%, indicating high measurement stability.
 
-1. **Increased Hot Zone Hit Rate:** Higher α concentrates accesses on fewer items, increasing the probability that requested data resides in the O(1) hot zone.
-
-2. **Reduced Cold Zone Pressure:** With fewer unique items accessed, the effective cold zone size shrinks, improving cache efficiency.
-
-At α = 1.5, FreqPartitionDict achieves latency approaching std::unordered_map (25 ns vs. 5 ns), while providing the additional benefit of frequency-based data organization absent in standard containers.
+This improvement stems from two interrelated mechanisms. First, higher α concentrates accesses on fewer items, increasing the probability that requested data resides in the O(1) hot zone—termed increased hot zone hit rate. Second, with fewer unique items accessed, the effective cold zone size shrinks, improving cache efficiency—termed reduced cold zone pressure. At α = 1.5, FreqPartitionDict achieves latency approaching std::unordered_map (25 ns vs. 5 ns), while providing the additional benefit of frequency-based data organization absent in standard containers.
 
 ### 5.2 Hot Zone Capacity Analysis
 
@@ -148,11 +110,7 @@ At α = 1.5, FreqPartitionDict achieves latency approaching std::unordered_map (
 
 *Figure 2: (a) Lookup latency and (b) hit rate versus hot zone capacity (Release mode, α = 1.0, N = 1000). The inflection point at capacity 64 indicates a phase transition in caching behavior.*
 
-Figure 2 reveals a critical phase transition at H = 64:
-
-- **Hit Rate Improvement:** Increases sharply from 23.6% (H = 32) to 56.8% (H = 64), a **2.4× improvement**.
-- **Optimal Sizing:** H ≈ 6.4% of working set size captures the majority of hot data for α = 1.0.
-- **Diminishing Returns:** Beyond H = 64, hit rate improves only marginally (56.8% → 67.8%) at doubled memory cost.
+Figure 2 reveals a critical phase transition at H = 64. The hit rate increases sharply from 23.6% (H = 32) to 56.8% (H = 64), a 2.4× improvement. For α = 1.0, H ≈ 6.4% of working set size captures the majority of hot data. However, beyond H = 64, hit rate improves only marginally (56.8% → 67.8%) at doubled memory cost, exhibiting diminishing returns.
 
 ### 5.3 Operation Breakdown
 
@@ -160,13 +118,7 @@ Figure 2 reveals a critical phase transition at H = 64:
 
 *Figure 3: Latency comparison across operation types (Release mode). Values annotated above bars indicate mean latency in nanoseconds.*
 
-**Lookup Performance:**
-- Zipfian access (α = 1.0): FreqPartitionDict (274 ns) vs. std::map (18 ns) — overhead for frequency tracking
-- Highly skewed (α = 1.5): FreqPartitionDict (25 ns) approaches std::unordered_map (5 ns)
-
-**Insertion Performance:**
-- All structures show comparable insertion costs
-- FreqPartitionDict (122 ns) falls between std::unordered_map (97 ns) and std::map (94 ns)
+Regarding lookup performance, under Zipfian access (α = 1.0), FreqPartitionDict achieves 274 ns versus std::map at 18 ns, reflecting overhead for frequency tracking; under highly skewed conditions (α = 1.5), FreqPartitionDict (25 ns) approaches std::unordered_map (5 ns). For insertion performance, all structures show comparable insertion costs, with FreqPartitionDict (122 ns) falling between std::unordered_map (97 ns) and std::map (94 ns).
 
 ---
 
@@ -180,7 +132,7 @@ Figure 2 reveals a critical phase transition at H = 64:
 | FreqPartitionDict (α = 1.0) | 306 ns | [299, 314] | 2.00 | 65.1× | 16.6× |
 | FreqPartitionDict (α = 1.5) | **25.3 ns** | **[24.0, 26.5]** | **3.93** | **5.4×** | **1.4×** |
 
-*Table 2: Lookup latency under varying workload skewness (Release mode, H = 128, n = 10 repetitions). CV = coefficient of variation. Best FreqPartitionDict results in bold.*
+*Table 3: Lookup latency under varying workload skewness (Release mode, H = 128, n = 10 repetitions). CV = coefficient of variation. Best FreqPartitionDict results in bold.*
 
 ---
 
@@ -188,35 +140,21 @@ Figure 2 reveals a critical phase transition at H = 64:
 
 ### 7.1 Applicability
 
-FreqPartitionDict is particularly suited for:
-
-1. **Highly Skewed Workloads (α ≥ 1.2):** Achieves near hash-table performance with frequency-aware organization.
-
-2. **Memory-Constrained Environments:** Hot zone acts as an intelligent admission filter when full caching is infeasible.
-
-3. **Dynamic Workloads:** Automatic adaptation eliminates manual tuning as access patterns evolve.
+FreqPartitionDict is particularly suited for highly skewed workloads (α ≥ 1.2), achieving near hash-table performance with frequency-aware organization. In memory-constrained environments, the hot zone acts as an intelligent admission filter when full caching is infeasible. For dynamic workloads, automatic adaptation eliminates manual tuning as access patterns evolve.
 
 ### 7.2 Configuration Guidelines
 
-Based on empirical results:
-
-- **Hot Zone Capacity:** Initialize at 6–10% of expected working set size. Monitor hit rates and adjust accordingly.
-- **Promotion Threshold:** Default value (3) provides good balance. Increase for stability; decrease for faster adaptation.
-- **Eviction Strategy:** Employ heap-based optimization (O(log H)) when H > 64; linear scanning suffices for smaller capacities.
+Based on empirical results, we recommend initializing hot zone capacity at 6–10% of expected working set size, monitoring hit rates and adjusting accordingly. The default promotion threshold (3) provides good balance, which can be increased for stability or decreased for faster adaptation. For eviction strategy, heap-based optimization (O(log H)) is recommended when H > 64; linear scanning suffices for smaller capacities.
 
 ### 7.3 Limitations
 
-- **Single-Threaded Design:** Concurrent access requires external synchronization (thread-safe variant provided separately).
-- **Static Threshold:** Fixed promotion threshold cannot adapt to changing workload characteristics dynamically.
-- **No Persistence:** Current implementation lacks disk-backed storage or crash recovery mechanisms.
+The current implementation has several limitations. First, the baseline version employs a single-threaded design, requiring external synchronization for concurrent access (a thread-safe variant is provided separately). Second, the fixed promotion threshold cannot dynamically adapt to changing workload characteristics. Additionally, the current implementation lacks disk-backed storage or crash recovery mechanisms.
 
 ---
 
 ## 8. Conclusion
 
-FreqPartitionDict demonstrates that incorporating access frequency awareness into dictionary design yields significant benefits for skewed workloads. Our evaluation shows that under realistic access patterns (Zipf α = 1.5), the structure achieves latency approaching hash tables (25 ns vs. 5 ns) while maintaining O(log n) worst-case guarantees and providing valuable frequency-based organization for analytics and cache management.
-
-The key insight is that workload characteristics profoundly impact data structure performance: no single implementation dominates all scenarios, but hybrid approaches that adapt to observed patterns can bridge the gap between theoretical complexity and practical efficiency.
+FreqPartitionDict demonstrates that incorporating access frequency awareness into dictionary design yields significant benefits for skewed workloads. Our evaluation shows that under realistic access patterns (Zipf α = 1.5), the structure achieves latency approaching hash tables (25 ns vs. 5 ns) while maintaining O(log n) worst-case guarantees and providing valuable frequency-based organization for analytics and cache management. The key insight is that workload characteristics profoundly impact data structure performance: no single implementation dominates all scenarios, but hybrid approaches that adapt to observed patterns can bridge the gap between theoretical complexity and practical efficiency.
 
 ---
 
@@ -248,59 +186,29 @@ The key insight is that workload characteristics profoundly impact data structur
 
 ### 9.1 Iterator Support
 
-To meet STL compatibility requirements, FreqPartitionDict implements a forward iterator supporting range-based traversal:
+To meet STL compatibility requirements, FreqPartitionDict implements a forward iterator supporting range-based traversal. The iteration order traverses the hot zone (unordered) first, then the cold zone (key-ordered), with time complexity O(n) where n is total element count. Note that modifying the dictionary during iteration may invalidate iterators.
 
 ```cpp
 fpd::FreqPartitionDict<int, std::string> dict(128, 3);
-// ... insert data ...
-
-// Range-based traversal
 for (const auto& [key, value] : dict) {
     process(key, value);
 }
-
-// Standard algorithm compatibility
 std::vector<std::pair<int, std::string>> items(dict.begin(), dict.end());
 ```
 
-**Implementation Features**:
-- Iteration order: Hot zone (unordered) first, then cold zone (key-ordered)
-- Time complexity: O(n), where n is total element count
-- Safety: Modifying dictionary during iteration may invalidate iterators
-
 ### 9.2 Thread-Safe Variant
 
-For concurrent scenarios, we provide `FreqPartitionDictThreadSafe`:
+For concurrent scenarios, we provide `FreqPartitionDictThreadSafe` using a read-write lock (`std::shared_mutex`) for synchronization. Read operations (`get`, `contains`, `size`) use shared locks, while write operations (`insert`, `erase`, `clear`) use exclusive locks. Batch operations execute under a single lock, significantly reducing lock contention.
 
-**Synchronization Strategy**:
-- Read-write lock (`std::shared_mutex`): Shared for reads, exclusive for writes
-- Read operations (`get`, `contains`, `size`): Use `shared_lock`
-- Write operations (`insert`, `erase`, `clear`): Use `unique_lock`
-
-**Batch Operation Optimization**:
 ```cpp
-// Batch insertion reduces lock overhead
 dict.insert_batch(data.begin(), data.end());
-
-// Batch reading
 std::vector<std::optional<V>> results;
 dict.get_batch(keys, results);
 ```
 
 ### 9.3 Heap-Optimized Version
 
-For large hot zone capacities (H > 64), we provide heap-based optimization `FreqPartitionDictHeap`:
-
-**Complexity Comparison**:
-
-| Operation | Baseline | Heap-Optimized | Best For |
-|-----------|----------|----------------|----------|
-| Lookup | O(1) | O(1) | Same |
-| Eviction | O(H) | O(log H) | Heap better |
-| Increase freq | O(1) | O(log H) | Baseline better |
-| Insert | O(1) | O(log H) | Baseline better |
-
-**Recommendation**: When H > 64 and promotion/demotion is frequent, heap-optimized version provides better overall performance.
+For large hot zone capacities (H > 64), we provide heap-based optimization `FreqPartitionDictHeap`. Lookup operations are O(1) in both versions, but eviction improves from O(H) in the baseline to O(log H) in the heap-optimized version. However, frequency increment and insertion operations are O(log H) in the heap version versus O(1) in the baseline. Overall, when H > 64 and promotion/demotion is frequent, the heap-optimized version provides better performance.
 
 ---
 
@@ -308,222 +216,39 @@ For large hot zone capacities (H > 64), we provide heap-based optimization `Freq
 
 ### 10.1 Real-World Workload Testing
 
-To validate FreqPartitionDict effectiveness in real scenarios, we designed three workload simulations:
-
-**Database Query Workload**:
-- Simulates TPC-C style order queries
-- Access pattern: 80% recent data + 15% historical + 5% random scan
-- Results: 78% hot zone hit rate, approaching ideal cache performance
-
-**Web Server Access Log**:
-- Simulates popular page access (Zipf α = 1.2)
-- Dynamic trends: Trending page set updated every 1000 requests
-- Results: Adaptive mechanism effectively tracks hotspot changes
-
-**Social Network Friend Queries**:
-- Simulates active user queries (75%) + friend relation queries (15%) + random users (10%)
-- Dynamic hotspots: 10% probability of updating active user set every 5000 requests
-- Results: With promotion threshold 3, hotspot response latency < 5ms
+To validate FreqPartitionDict effectiveness in real scenarios, we designed three workload simulations. The database query workload simulates TPC-C style order queries with access pattern of 80% recent data plus 15% historical data plus 5% random scan, achieving 78% hot zone hit rate approaching ideal cache performance. The web server access log simulates popular page access (Zipf α = 1.2) with trending page set updated every 1000 requests, where the adaptive mechanism effectively tracks hotspot changes. The social network friend query simulates active user queries (75%) plus friend relation queries (15%) plus random users (10%), with 10% probability of updating active user set every 5000 requests, achieving hotspot response latency below 5ms with promotion threshold 3.
 
 ### 10.2 Concurrent Performance Testing
 
-Test Environment: Intel Core i7-12700H (14 cores, 20 threads)
-
-**Scalability Test** (Zipf reads, H = 128):
-
-| Threads | Throughput (ops/sec) | Scaling Efficiency |
-|---------|---------------------|-------------------|
-| 1 | 3.2M | 100% |
-| 2 | 6.1M | 95% |
-| 4 | 11.2M | 88% |
-| 8 | 18.5M | 72% |
-
-**Mixed Read-Write Test** (4 threads, different ratios):
-
-| Read Ratio | Avg Latency | Hot Hit Rate |
-|------------|-------------|--------------|
-| 50% | 245 ns | 65% |
-| 80% | 180 ns | 72% |
-| 95% | 125 ns | 78% |
-
-**Conclusion**: Thread-safe variant performs well in read-heavy scenarios, with scaling efficiency decreasing as thread count increases (lock contention).
+The test environment was Intel Core i7-12700H (14 cores, 20 threads). Scalability testing (Zipf reads, H = 128) showed single-thread throughput of 3.2M ops/sec, 2-thread scaling efficiency of 95%, 4-thread efficiency of 88%, and 8-thread efficiency of 72%. Mixed read-write testing (4 threads) indicated average latency of 245 ns with 65% hot zone hit rate at 50% read ratio, 180 ns with 72% hit rate at 80% read ratio, and 125 ns with 78% hit rate at 95% read ratio. The thread-safe variant performs well in read-heavy scenarios, with scaling efficiency decreasing as thread count increases primarily due to lock contention.
 
 ### 10.3 Memory Usage Analysis
 
-To evaluate the space efficiency of FreqPartitionDict, we measured memory usage across different data structures:
-
-| Structure | Per-Element Overhead | Total Overhead (N=10000) | Notes |
-|-----------|---------------------|--------------------------|-------|
-| std::unordered_map | ~8 bytes | 80 KB | Hash buckets + list pointers |
-| std::map | ~24 bytes | 240 KB | Red-black tree nodes (color + left/right/parent pointers) |
-| FreqPartitionDict | ~12-16 bytes | 120-160 KB | Frequency counter (4B) + zone overhead |
-
-*Table 4: Memory usage comparison. FreqPartitionDict's additional overhead comes primarily from frequency counters, but overall memory can be reduced through hot zone compression.*
-
-**Memory Optimization Recommendations**:
-- Use `reserve()` to pre-allocate hot zone capacity, reducing rehash overhead
-- For memory-sensitive scenarios, reduce hot zone capacity to 5% of working set
-- Use `memory_usage()` method to monitor actual memory consumption
+To evaluate the space efficiency of FreqPartitionDict, we measured memory usage across different data structures. std::unordered_map has per-element overhead of approximately 8 bytes with total overhead of 80 KB (N=10000), primarily from hash buckets and list pointers. std::map has per-element overhead of approximately 24 bytes with total overhead of 240 KB, from red-black tree nodes (color plus left/right/parent pointers). FreqPartitionDict has per-element overhead of approximately 12-16 bytes with total overhead of 120-160 KB, with additional overhead primarily from frequency counters (4B) and zone management. Overall memory can be reduced through hot zone compression. We recommend using `reserve()` to pre-allocate hot zone capacity to reduce rehash overhead, reducing hot zone capacity to 5% of working set for memory-sensitive scenarios, and using `memory_usage()` method to monitor actual memory consumption.
 
 ### 10.4 Cache Algorithm Comparison
 
-To comprehensively evaluate FreqPartitionDict against traditional cache algorithms, we implemented LRU and LFU caches as comparison baselines.
+To comprehensively evaluate FreqPartitionDict against traditional cache algorithms, we implemented LRU and LFU caches as comparison baselines. The experimental configuration used data size N = 10,000 items, cache capacity 128 (hot zone capacity), 100,000 operations, and Zipf distribution workload (α ∈ {0.5, 0.8, 1.0, 1.2, 1.5}). It is important to note that FreqPartitionDict is a dictionary plus cache hybrid storing all data, while LRU/LFU are pure caches with limited capacity, representing fundamentally different application scenarios.
 
-**Experimental Design**:
-- Data size: N = 10,000 items
-- Cache capacity: 128 (hot zone capacity)
-- Operations: 100,000
-- Workload: Zipf distribution (α ∈ {0.5, 0.8, 1.0, 1.2, 1.5})
+Hit rate comparison experiments showed FreqPartitionDict maintaining 100% hit rate across all skewness levels. LRU (128) achieved 2.9% hit rate at α = 0.5, increasing to 88.8% at α = 1.5. LFU (128) showed overall lower hit rates, reaching only 39.8% at α = 1.5. When cache capacity expanded to 256, LRU hit rates improved moderately while LFU improvement was limited.
 
-**Important Note**: FreqPartitionDict is a dictionary + cache hybrid that stores ALL data; LRU/LFU are pure caches with limited capacity.
+Lookup latency comparison showed LRU/LFU generally having lower latency than FreqPartitionDict, but this directly correlates with their lower hit rates. At α = 1.5, FreqPartitionDict latency was 4.66 ms, approaching LRU's 0.83 ms. In practical applications, cache misses may trigger expensive backend queries, making pure latency comparisons potentially misleading.
 
-#### 10.4.1 Hit Rate Comparison
-
-| Zipf α | FreqPartitionDict | LRU (128) | LFU (128) | LRU (256) | LFU (256) |
-|--------|-------------------|-----------|-----------|-----------|-----------|
-| 0.5 | **100%** | 2.9% | 1.4% | 5.8% | 2.8% |
-| 0.8 | **100%** | 13.5% | 1.6% | 25.6% | 3.2% |
-| 1.0 | **100%** | 40.5% | 6.3% | 48.3% | 8.4% |
-| 1.2 | **100%** | 64.9% | 1.3% | 76.2% | 4.5% |
-| 1.5 | **100%** | 88.8% | 39.8% | 91.8% | 6.0% |
-
-*Table 5: Hit rate comparison. FreqPartitionDict stores all data, hence 100% hit rate.*
-
-#### 10.4.2 Lookup Latency Comparison
-
-| Zipf α | FreqPartitionDict | LRU (128) | LFU (128) |
-|--------|-------------------|-----------|-----------|
-| 0.5 | 69.5 ms | **0.96 ms** | 0.36 ms |
-| 0.8 | 53.1 ms | **1.20 ms** | 0.35 ms |
-| 1.0 | 33.0 ms | **1.26 ms** | 0.42 ms |
-| 1.2 | 17.6 ms | **1.02 ms** | 0.30 ms |
-| 1.5 | **4.66 ms** | 0.83 ms | 0.68 ms |
-
-*Table 6: Lookup latency comparison (100,000 operations). LRU/LFU have lower latency but also lower hit rates.*
-
-#### 10.4.3 Key Findings
-
-1. **Fundamental Difference**: FreqPartitionDict is a dictionary (stores all data) + hot zone optimization, while LRU/LFU are pure caches (limited capacity). They serve different use cases.
-
-2. **Hit Rate Advantage**: FreqPartitionDict maintains 100% hit rate since all data is in the structure. LRU achieves 88.8% at high skew (α = 1.5), but drops sharply at lower skew.
-
-3. **Latency Trade-off**: LRU/LFU have lower latency, but at the cost of many cache misses. In real applications, cache misses may trigger expensive backend queries.
-
-4. **Use Cases**:
-   - **FreqPartitionDict**: Scenarios requiring storage of all data with optimized hot data access
-   - **LRU/LFU**: Memory-constrained scenarios where cache misses are acceptable
-
-#### 10.4.4 Workload Shift Test
-
-Simulating sudden hotspot change:
-- Phase 1: Access hotspot A (keys 0-99), 50,000 operations
-- Phase 2: Access hotspot B (keys 1000-1099), 50,000 operations
-
-| Phase | FreqPartitionDict | LRU (256) | LFU (256) |
-|-------|-------------------|-----------|-----------|
-| Phase 1 | 100% | 100% | 100% |
-| Phase 2 | 100% | 100% | 100% |
-
-*Table 7: Workload shift test results. Since hotspot range is smaller than cache capacity, all algorithms adapt quickly.*
-
-**Conclusion**: When hotspot range is smaller than cache capacity, LRU adapts quickly to changes; FreqPartitionDict maintains 100% hit rate regardless of hotspot changes.
+Workload mutation testing simulated sudden hotspot changes with Phase 1 accessing hotspot A (keys 0-99) for 50,000 operations and Phase 2 accessing hotspot B (keys 1000-1099) for 50,000 operations. Since hotspot ranges were smaller than cache capacity, all algorithms achieved 100% hit rate in both phases. When hotspot range is smaller than cache capacity, LRU adapts quickly to changes; FreqPartitionDict maintains 100% hit rate regardless of hotspot changes.
 
 ### 10.5 Parameter Sensitivity Analysis
 
-To guide users in selecting optimal configuration parameters, we systematically tested the impact of promotion threshold and hot zone capacity on performance.
+To guide users in selecting optimal configuration parameters, we systematically tested the impact of promotion threshold and hot zone capacity on performance. Promotion threshold experiments (α = 1.2, H = 128, 100,000 operations) showed threshold 1 yielding 23,315 promotions with fast adaptation but high promotion rate, threshold 3 yielding 14,345 promotions as the recommended default balancing adaptation speed and stability, and threshold 10 yielding 6,776 promotions with high stability but slower adaptation. For frequently changing workloads, threshold 1-2 is recommended; for stable workloads, threshold 5-10 is suggested.
 
-#### 10.5.1 Promotion Threshold Impact
+Hot zone capacity experiments (α = 1.2, threshold = 3, N = 10,000) showed capacity 32 achieving 64.4% hot zone hit rate with 390 KB memory, capacity 128 achieving 76.8% hit rate with 388 KB memory, and capacity 512 achieving 85.0% hit rate with 382 KB memory. Hot zone capacity at 5-10% of working set size is appropriate, with capacity 64-128 suitable for most scenarios and larger capacities yielding diminishing marginal returns.
 
-| Threshold | Hit Rate | Promotions | Demotions | Notes |
-|-----------|----------|------------|-----------|-------|
-| 1 | 100% | 23,315 | 23,187 | Fast adaptation, high promotion rate |
-| 2 | 100% | 17,471 | 17,343 | Balanced adaptation speed |
-| **3** | **100%** | **14,345** | **14,217** | **Recommended default** |
-| 5 | 100% | 10,600 | 10,472 | More stable, slower adaptation |
-| 10 | 100% | 6,776 | 6,648 | High stability |
-| 20 | 100% | 3,233 | 3,105 | Very stable, slow adaptation |
+### 10.6 Long-Term Stability Testing
 
-*Table 8: Promotion threshold impact (α = 1.2, H = 128, 100,000 operations).*
-
-**Recommendations**:
-- Default threshold 3: Balanced adaptation speed and stability
-- Frequently changing workloads: Threshold 1-2
-- Stable workloads: Threshold 5-10
-
-#### 10.5.2 Hot Zone Capacity Impact
-
-| Capacity | Hit Rate | Hot Hit Rate | Memory (KB) |
-|----------|----------|--------------|-------------|
-| 32 | 100% | 64.4% | 390 |
-| 64 | 100% | 71.1% | 389 |
-| **128** | **100%** | **76.8%** | **388** |
-| 256 | 100% | 81.2% | 386 |
-| 512 | 100% | 85.0% | 382 |
-
-*Table 9: Hot zone capacity impact (α = 1.2, threshold = 3, N = 10,000).*
-
-**Recommendations**:
-- Set hot zone capacity to 5-10% of working set size
-- Capacity 64-128 suits most scenarios
-- Larger capacity yields diminishing returns
-
-### 10.6 Long-term Stability Test
-
-To validate FreqPartitionDict's stability during extended operation, we executed a continuous test of 1,000,000 operations.
-
-**Test Configuration**:
-- Data size: N = 10,000
-- Hot zone capacity: H = 128
-- Promotion threshold: τ = 3
-- Workload: Zipf α = 1.2
-
-**Results**:
-
-| Metric | Value | Notes |
-|--------|-------|-------|
-| Min hit rate | 100.00% | Stable throughout |
-| Max hit rate | 100.00% | No fluctuation |
-| Hit rate std dev | 0.00% | EXCELLENT |
-| Promotion/Demotion ratio | 1.00 | Perfect balance |
-| Throughput | 1,475 ops/sec | Stable performance |
-
-*Table 10: Long-term stability test results.*
-
-**Key Findings**:
-1. Hit rate maintained at 100% throughout the test with no fluctuation
-2. Promotion and demotion operations perfectly balanced, indicating healthy hot zone management
-3. Memory usage stable, no signs of leakage
+To verify FreqPartitionDict stability during extended operation, we executed a continuous test of 1,000,000 operations. The test configuration used data size N = 10,000, hot zone capacity H = 128, promotion threshold τ = 3, and Zipf α = 1.2 workload. Results showed minimum and maximum hit rates both at 100.00%, with hit rate standard deviation of 0.00% rated EXCELLENT. The promotion/demotion ratio was 1.00, indicating perfect balance. Throughput was 1,475 ops/sec with stable performance. Hit rate remained at 100% throughout the test without fluctuation, and perfectly balanced promotion and demotion operations indicated healthy hot zone management with stable memory usage showing no signs of leakage.
 
 ### 10.7 Batch Operation Optimization
 
-To improve batch data processing efficiency, FreqPartitionDict provides batch operation interfaces:
-
-```cpp
-// Batch insert
-std::vector<std::pair<int, std::string>> data = {...};
-dict.insert_batch(data.begin(), data.end());
-
-// Batch query
-std::vector<int> keys = {1, 2, 3, 4, 5};
-std::vector<std::optional<std::string>> results;
-dict.get_batch(keys, results);
-
-// Batch erase
-dict.erase_batch(keys.begin(), keys.end());
-
-// Get all hot items
-auto hot_items = dict.get_all_hot_items();
-```
-
-**Thread-Safe Version Advantage**: Batch operations execute under a single lock, significantly reducing lock contention:
-
-| Operation | Single Op | Batch (100 items) | Speedup |
-|-----------|-----------|-------------------|---------|
-| Insert | 125 ns | 12 ns/item | 10.4× |
-| Query | 275 ns | 25 ns/item | 11.0× |
-| Erase | 90 ns | 8 ns/item | 11.3× |
-
-*Table 11: Batch operation performance comparison (thread-safe version).*
+To improve bulk data processing efficiency, FreqPartitionDict provides batch operation interfaces including `insert_batch`, `get_batch`, `erase_batch`, and `get_all_hot_items`. In the thread-safe version, batch operations execute under a single lock, significantly reducing lock contention. Performance comparison showed single insert at 125 ns versus batch insert (100 items) at 12 ns/item for 10.4× speedup, single query at 275 ns versus batch query at 25 ns/item for 11.0× speedup, and single erase at 90 ns versus batch erase at 8 ns/item for 11.3× speedup.
 
 ---
 
@@ -555,15 +280,7 @@ This shows that as hot zone capacity $H$ increases, the hit rate rapidly approac
 
 ### A.2 Impact of Promotion Threshold
 
-Let $\tau$ be the promotion threshold, requiring $\tau$ accesses for an element to be promoted from cold to hot zone. This introduces the following trade-offs:
-
-**Latency vs. Stability**:
-- Smaller $\tau$: Faster adaptation to workload changes, but may cause hot zone thrashing
-- Larger $\tau$: More stable hot zone, but increased latency for new hot items
-
-**Optimal Threshold Analysis**:
-
-Assuming workload changes with period $T$ and hot item duration $t_h$, the optimal threshold should satisfy:
+Let $\tau$ be the promotion threshold, requiring $\tau$ accesses for an element to be promoted from cold to hot zone. Smaller $\tau$ enables faster adaptation to workload changes but may cause hot zone thrashing; larger $\tau$ yields more stable hot zone but increased latency for new hot items. Assuming workload changes with period $T$ and hot item duration $t_h$, the optimal threshold should satisfy:
 
 $$\tau_{opt} \approx \frac{t_h}{T} \cdot f_{avg}$$
 
@@ -571,33 +288,15 @@ where $f_{avg}$ is the average access frequency.
 
 ### A.3 Space Complexity Analysis
 
-| Component | Space Complexity | Notes |
-|-----------|------------------|-------|
-| Hot Zone | $O(H)$ | Hash table + frequency counter |
-| Cold Zone | $O(N)$ | Red-black tree + frequency counter |
-| Total | $O(N + H)$ | Typically $H \ll N$ |
-
-Compared to standard hash tables $O(N)$, FreqPartitionDict's space overhead comes from:
-- Frequency counters: 8 extra bytes per element
-- Dual-zone storage: Cold zone uses tree structure with pointer overhead
+Hot zone space complexity is O(H), including hash table and frequency counter; cold zone space complexity is O(N), including red-black tree and frequency counter; total space complexity is O(N + H), typically with H much smaller than N. Compared to standard hash tables O(N), FreqPartitionDict's space overhead comes primarily from frequency counters (8 extra bytes per element) and dual-zone storage (cold zone uses tree structure with pointer overhead).
 
 ### A.4 Amortized Analysis
 
-For a sequence of $m$ operations, let:
-- $n_i$: number of elements after $i$-th operation
-- $p_i$: whether $i$-th operation is a promotion
-
-Total time complexity:
+For a sequence of $m$ operations, total time complexity is:
 
 $$T_{total} = \sum_{i=1}^{m} O(1) + \sum_{i=1}^{m} p_i \cdot O(\log H)$$
 
-In steady state, promotion rate equals demotion rate, and:
-
-$$\sum_{i=1}^{m} p_i \approx m \cdot (1 - P_{hot}) \cdot P_{promote}$$
-
-where $P_{promote}$ is the probability that a cold zone element reaches the promotion threshold.
-
-Therefore, the amortized time complexity is:
+where $p_i$ indicates whether the $i$-th operation is a promotion. In steady state, promotion rate equals demotion rate, yielding amortized time complexity:
 
 $$T_{amortized} = O(1) + (1 - P_{hot}) \cdot P_{promote} \cdot O(\log H)$$
 
@@ -610,16 +309,10 @@ For highly skewed workloads ($P_{hot} \approx 1$), the amortized complexity appr
 All benchmarks are reproducible using the following commands:
 
 ```bash
-# Build in Release mode
 mkdir build && cd build
 cmake -DCMAKE_BUILD_TYPE=Release ..
 cmake --build . --config Release
-
-# Execute benchmarks
 ./benchmarks/benchmark_fpd --benchmark_repetitions=5 --benchmark_min_time=0.5s
-
-# Generate visualizations
-python scripts/visualize_performance.py
 ```
 
 Source code and complete benchmark data: https://github.com/AlanAkillove/FreqPartitionDict
