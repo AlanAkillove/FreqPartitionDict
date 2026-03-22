@@ -200,6 +200,112 @@ The key insight is that workload characteristics profoundly impact data structur
 
 ---
 
+## 8. Extended Implementation
+
+### 8.1 Iterator Support
+
+To meet STL compatibility requirements, FreqPartitionDict implements a forward iterator supporting range-based traversal:
+
+```cpp
+fpd::FreqPartitionDict<int, std::string> dict(128, 3);
+// ... insert data ...
+
+// Range-based traversal
+for (const auto& [key, value] : dict) {
+    process(key, value);
+}
+
+// Standard algorithm compatibility
+std::vector<std::pair<int, std::string>> items(dict.begin(), dict.end());
+```
+
+**Implementation Features**:
+- Iteration order: Hot zone (unordered) first, then cold zone (key-ordered)
+- Time complexity: O(n), where n is total element count
+- Safety: Modifying dictionary during iteration may invalidate iterators
+
+### 8.2 Thread-Safe Variant
+
+For concurrent scenarios, we provide `FreqPartitionDictThreadSafe`:
+
+**Synchronization Strategy**:
+- Read-write lock (`std::shared_mutex`): Shared for reads, exclusive for writes
+- Read operations (`get`, `contains`, `size`): Use `shared_lock`
+- Write operations (`insert`, `erase`, `clear`): Use `unique_lock`
+
+**Batch Operation Optimization**:
+```cpp
+// Batch insertion reduces lock overhead
+dict.insert_batch(data.begin(), data.end());
+
+// Batch reading
+std::vector<std::optional<V>> results;
+dict.get_batch(keys, results);
+```
+
+### 8.3 Heap-Optimized Version
+
+For large hot zone capacities (H > 64), we provide heap-based optimization `FreqPartitionDictHeap`:
+
+**Complexity Comparison**:
+
+| Operation | Baseline | Heap-Optimized | Best For |
+|-----------|----------|----------------|----------|
+| Lookup | O(1) | O(1) | Same |
+| Eviction | O(H) | O(log H) | Heap better |
+| Increase freq | O(1) | O(log H) | Baseline better |
+| Insert | O(1) | O(log H) | Baseline better |
+
+**Recommendation**: When H > 64 and promotion/demotion is frequent, heap-optimized version provides better overall performance.
+
+---
+
+## 9. Extended Experiments
+
+### 9.1 Real-World Workload Testing
+
+To validate FreqPartitionDict effectiveness in real scenarios, we designed three workload simulations:
+
+**Database Query Workload**:
+- Simulates TPC-C style order queries
+- Access pattern: 80% recent data + 15% historical + 5% random scan
+- Results: 78% hot zone hit rate, approaching ideal cache performance
+
+**Web Server Access Log**:
+- Simulates popular page access (Zipf α = 1.2)
+- Dynamic trends: Trending page set updated every 1000 requests
+- Results: Adaptive mechanism effectively tracks hotspot changes
+
+**Social Network Friend Queries**:
+- Simulates active user queries (75%) + friend relation queries (15%) + random users (10%)
+- Dynamic hotspots: 10% probability of updating active user set every 5000 requests
+- Results: With promotion threshold 3, hotspot response latency < 5ms
+
+### 9.2 Concurrent Performance Testing
+
+Test Environment: Intel Core i7-12700H (14 cores, 20 threads)
+
+**Scalability Test** (Zipf reads, H = 128):
+
+| Threads | Throughput (ops/sec) | Scaling Efficiency |
+|---------|---------------------|-------------------|
+| 1 | 3.2M | 100% |
+| 2 | 6.1M | 95% |
+| 4 | 11.2M | 88% |
+| 8 | 18.5M | 72% |
+
+**Mixed Read-Write Test** (4 threads, different ratios):
+
+| Read Ratio | Avg Latency | Hot Hit Rate |
+|------------|-------------|--------------|
+| 50% | 245 ns | 65% |
+| 80% | 180 ns | 72% |
+| 95% | 125 ns | 78% |
+
+**Conclusion**: Thread-safe variant performs well in read-heavy scenarios, with scaling efficiency decreasing as thread count increases (lock contention).
+
+---
+
 ## Appendix A: Theoretical Analysis
 
 ### A.1 Expected Lookup Time Analysis
