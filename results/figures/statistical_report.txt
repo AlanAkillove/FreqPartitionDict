@@ -1,0 +1,211 @@
+================================================================================
+Statistical Analysis Report - FreqPartitionDict Benchmarks
+================================================================================
+
+
+BM_FreqPartitionDict_Insert
+------------------------------------------------------------
+  Sample size (n):        5
+  Mean:                   121.09 ns
+  Median:                 119.63 ns
+  Std Dev:                4.76 ns
+  Std Error:              2.13 ns
+  Coefficient of Variation: 3.93%
+  95% CI:                 [115.18, 127.00] ns
+  Range:                  [114.75, 126.95] ns
+
+BM_FreqPartitionDict_Uniform
+------------------------------------------------------------
+  Sample size (n):        5
+  Mean:                   763.81 ns
+  Median:                 767.30 ns
+  Std Dev:                14.59 ns
+  Std Error:              6.52 ns
+  Coefficient of Variation: 1.91%
+  95% CI:                 [745.70, 781.93] ns
+  Range:                  [749.86, 784.74] ns
+
+BM_FreqPartitionDict_Zipf/128
+------------------------------------------------------------
+  Sample size (n):        5
+  Mean:                   273.72 ns
+  Median:                 276.23 ns
+  Std Dev:                3.44 ns
+  Std Error:              1.54 ns
+  Coefficient of Variation: 1.26%
+  95% CI:                 [269.45, 277.99] ns
+  Range:                  [269.95, 276.23] ns
+
+BM_FreqPartitionDict_Zipf/16
+------------------------------------------------------------
+  Sample size (n):        5
+  Mean:                   348.63 ns
+  Median:                 344.24 ns
+  Std Dev:                6.55 ns
+  Std Error:              2.93 ns
+  Coefficient of Variation: 1.88%
+  95% CI:                 [340.50, 356.77] ns
+  Range:                  [344.24, 358.89] ns
+
+BM_FreqPartitionDict_Zipf/32
+------------------------------------------------------------
+  Sample size (n):        5
+  Mean:                   324.71 ns
+  Median:                 324.71 ns
+  Std Dev:                9.37 ns
+  Std Error:              4.19 ns
+  Coefficient of Variation: 2.89%
+  95% CI:                 [313.07, 336.34] ns
+  Range:                  [311.45, 337.96] ns
+
+BM_FreqPartitionDict_Zipf/64
+------------------------------------------------------------
+  Sample size (n):        5
+  Mean:                   290.25 ns
+  Median:                 291.57 ns
+  Std Dev:                10.89 ns
+  Std Error:              4.87 ns
+  Coefficient of Variation: 3.75%
+  95% CI:                 [276.73, 303.77] ns
+  Range:                  [271.69, 298.20] ns
+
+BM_FreqPartitionDict_Zipf/8
+------------------------------------------------------------
+  Sample size (n):        5
+  Mean:                   375.00 ns
+  Median:                 368.30 ns
+  Std Dev:                10.91 ns
+  Std Error:              4.88 ns
+  Coefficient of Variation: 2.91%
+  95% CI:                 [361.45, 388.55] ns
+  Range:                  [368.30, 393.42] ns
+
+BM_FreqPartitionDict_ZipfAlpha/10
+------------------------------------------------------------
+  Sample size (n):        5
+  Mean:                   306.15 ns
+  Median:                 307.62 ns
+  Std Dev:                6.13 ns
+  Std Error:              2.74 ns
+  Coefficient of Variation: 2.00%
+  95% CI:                 [298.54, 313.76] ns
+  Range:                  [300.29, 314.94] ns
+
+BM_FreqPartitionDict_ZipfAlpha/12
+------------------------------------------------------------
+  Sample size (n):        5
+  Mean:                   156.25 ns
+  Median:                 156.95 ns
+  Std Dev:                2.92 ns
+  Std Error:              1.30 ns
+  Coefficient of Variation: 1.87%
+  95% CI:                 [152.63, 159.87] ns
+  Range:                  [153.46, 160.44] ns
+
+BM_FreqPartitionDict_ZipfAlpha/15
+------------------------------------------------------------
+  Sample size (n):        5
+  Mean:                   25.26 ns
+  Median:                 25.50 ns
+  Std Dev:                0.99 ns
+  Std Error:              0.44 ns
+  Coefficient of Variation: 3.93%
+  95% CI:                 [24.03, 26.49] ns
+  Range:                  [23.72, 26.09] ns
+
+BM_FreqPartitionDict_ZipfAlpha/5
+------------------------------------------------------------
+  Sample size (n):        5
+  Mean:                   553.12 ns
+  Median:                 546.88 ns
+  Std Dev:                8.56 ns
+  Std Error:              3.83 ns
+  Coefficient of Variation: 1.55%
+  95% CI:                 [542.50, 563.75] ns
+  Range:                  [546.88, 562.50] ns
+
+BM_FreqPartitionDict_ZipfAlpha/8
+------------------------------------------------------------
+  Sample size (n):        5
+  Mean:                   466.66 ns
+  Median:                 460.38 ns
+  Std Dev:                9.36 ns
+  Std Error:              4.19 ns
+  Coefficient of Variation: 2.01%
+  95% CI:                 [455.04, 478.28] ns
+  Range:                  [460.38, 481.31] ns
+
+BM_Map_Insert
+------------------------------------------------------------
+  Sample size (n):        5
+  Mean:                   92.08 ns
+  Median:                 92.08 ns
+  Std Dev:                2.56 ns
+  Std Error:              1.15 ns
+  Coefficient of Variation: 2.78%
+  95% CI:                 [88.89, 95.26] ns
+  Range:                  [89.98, 96.26] ns
+
+BM_Map_Uniform
+------------------------------------------------------------
+  Sample size (n):        5
+  Mean:                   84.54 ns
+  Median:                 85.80 ns
+  Std Dev:                1.87 ns
+  Std Error:              0.84 ns
+  Coefficient of Variation: 2.21%
+  95% CI:                 [82.22, 86.87] ns
+  Range:                  [81.61, 85.80] ns
+
+BM_Map_Zipf
+------------------------------------------------------------
+  Sample size (n):        5
+  Mean:                   18.42 ns
+  Median:                 18.80 ns
+  Std Dev:                0.54 ns
+  Std Error:              0.24 ns
+  Coefficient of Variation: 2.95%
+  95% CI:                 [17.74, 19.09] ns
+  Range:                  [17.65, 18.80] ns
+
+BM_UnorderedMap_Insert
+------------------------------------------------------------
+  Sample size (n):        5
+  Mean:                   47.85 ns
+  Median:                 47.85 ns
+  Std Dev:                1.54 ns
+  Std Error:              0.69 ns
+  Coefficient of Variation: 3.23%
+  95% CI:                 [45.93, 49.77] ns
+  Range:                  [45.90, 49.80] ns
+
+BM_UnorderedMap_Uniform
+------------------------------------------------------------
+  Sample size (n):        5
+  Mean:                   4.32 ns
+  Median:                 4.26 ns
+  Std Dev:                0.28 ns
+  Std Error:              0.13 ns
+  Coefficient of Variation: 6.58%
+  95% CI:                 [3.96, 4.67] ns
+  Range:                  [3.90, 4.62] ns
+
+BM_UnorderedMap_Zipf
+------------------------------------------------------------
+  Sample size (n):        5
+  Mean:                   4.69 ns
+  Median:                 4.60 ns
+  Std Dev:                0.11 ns
+  Std Error:              0.05 ns
+  Coefficient of Variation: 2.45%
+  95% CI:                 [4.55, 4.83] ns
+  Range:                  [4.60, 4.81] ns
+
+================================================================================
+Significance Tests (¦Á = 0.05)
+================================================================================
+
+FreqPartitionDict (¦Á=1.5) vs std::unordered_map:
+  t-statistic: 46.0556
+  p-value: 0.000000
+  Significant difference: Yes

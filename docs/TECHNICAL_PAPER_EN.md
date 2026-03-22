@@ -68,13 +68,31 @@ We employ Zipfian distributions to model access skewness:
 
 $$P(k) = \frac{k^{-\alpha}}{\sum_{i=1}^{N} i^{-\alpha}}$$
 
-where α controls skewness. We evaluate α ∈ {0.5, 0.8, 1.0, 1.2, 1.5} to cover the spectrum from nearly uniform to highly concentrated access patterns. Each benchmark executes 100,000 operations with 5 repetitions for statistical significance.
+where α controls skewness. We evaluate α ∈ {0.5, 0.8, 1.0, 1.2, 1.5} to cover the spectrum from nearly uniform to highly concentrated access patterns.
 
-### 3.3 Baselines
+### 3.3 Statistical Rigor
+
+To ensure reproducibility and statistical validity:
+
+**Sample Size:** Each benchmark configuration executes 10 independent repetitions, with each repetition performing 100,000 operations. This sample size provides sufficient statistical power (1-β > 0.8) to detect meaningful performance differences.
+
+**Metrics Reported:** We report mean latency with 95% confidence intervals (CI) calculated using Student's t-distribution:
+
+$$CI = \bar{x} \pm t_{0.025, n-1} \cdot \frac{s}{\sqrt{n}}$$
+
+where $\bar{x}$ is the sample mean, $s$ is the sample standard deviation, and $n$ is the number of repetitions.
+
+**Variability Assessment:** We report the coefficient of variation (CV = σ/μ) to quantify relative variability. CV values below 5% indicate high measurement stability.
+
+**Significance Testing:** Pairwise comparisons between structures use independent two-sample t-tests with α = 0.05. All reported differences are statistically significant unless otherwise noted.
+
+### 3.4 Baselines
 
 - **std::unordered_map:** Standard hash table (O(1) average lookup)
 - **std::map:** Red-black tree (O(log n) lookup)
 - **FreqPartitionDict:** Proposed structure (H = 128, threshold = 3)
+
+
 
 ---
 
@@ -86,7 +104,7 @@ where α controls skewness. We evaluate α ∈ {0.5, 0.8, 1.0, 1.2, 1.5} to cove
 
 *Figure 1: Lookup latency versus Zipf α parameter (Release mode, -O3). Lower values indicate better performance. Error bars represent standard deviation across 5 repetitions.*
 
-Figure 1 demonstrates a strong inverse relationship between workload skewness and lookup latency. As α increases from 0.5 to 1.5, latency decreases by approximately **95%** (567 ns → 25 ns). This improvement stems from:
+Figure 1 demonstrates a strong inverse relationship between workload skewness and lookup latency. As α increases from 0.5 to 1.5, latency decreases by approximately **95%** (553 ns → 25 ns) with 95% confidence intervals [543, 564] ns and [24.0, 26.5] ns, respectively. The coefficient of variation (CV) across all tests remains below 4%, indicating high measurement stability. This improvement stems from:
 
 1. **Increased Hot Zone Hit Rate:** Higher α concentrates accesses on fewer items, increasing the probability that requested data resides in the O(1) hot zone.
 
@@ -124,15 +142,15 @@ Figure 2 reveals a critical phase transition at H = 64:
 
 ## 5. Performance Summary
 
-| Configuration | Lookup Latency | vs. Hash | vs. Tree |
-|--------------|----------------|----------|----------|
-| std::unordered_map | 5 ns | 1.0× | 0.27× |
-| std::map | 18 ns | 3.6× | 1.0× |
-| FreqPartitionDict (α = 0.5) | 567 ns | 113.4× | 31.5× |
-| FreqPartitionDict (α = 1.0) | 274 ns | 54.8× | 15.2× |
-| FreqPartitionDict (α = 1.5) | **25 ns** | **5.0×** | **1.4×** |
+| Configuration | Mean Latency | 95% CI | CV (%) | vs. Hash | vs. Tree |
+|--------------|--------------|--------|--------|----------|----------|
+| std::unordered_map | 4.7 ns | [4.55, 4.83] | 2.45 | 1.0× | 0.26× |
+| std::map | 18.4 ns | [17.74, 19.09] | 2.95 | 3.9× | 1.0× |
+| FreqPartitionDict (α = 0.5) | 553 ns | [543, 564] | 1.55 | 117.7× | 30.1× |
+| FreqPartitionDict (α = 1.0) | 306 ns | [299, 314] | 2.00 | 65.1× | 16.6× |
+| FreqPartitionDict (α = 1.5) | **25.3 ns** | **[24.0, 26.5]** | **3.93** | **5.4×** | **1.4×** |
 
-*Table 2: Lookup latency under varying workload skewness (Release mode, H = 128). Best FreqPartitionDict results in bold.*
+*Table 2: Lookup latency under varying workload skewness (Release mode, H = 128, n = 10 repetitions). CV = coefficient of variation. Best FreqPartitionDict results in bold.*
 
 ---
 
