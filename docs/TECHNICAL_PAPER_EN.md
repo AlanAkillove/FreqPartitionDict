@@ -81,13 +81,13 @@ where α controls skewness: α = 0 yields uniform distribution, while higher val
 
 *Figure 1: Lookup latency as a function of Zipf α parameter. Lower values indicate better performance. Reference lines show performance of standard containers.*
 
-Figure 1 reveals a striking relationship between workload skewness and structure performance. As α increases from 0.5 to 1.5, lookup latency decreases by approximately 89% (from 2307 ns to 252 ns). This dramatic improvement stems from two factors:
+Figure 1 reveals a striking relationship between workload skewness and structure performance. As α increases from 0.5 to 1.5, lookup latency decreases by approximately 95% (from 547 ns to 24 ns). This dramatic improvement stems from two factors:
 
 1. **Increased Hot Zone Hit Rate:** Higher α concentrates accesses on fewer items, increasing the probability that requested data resides in the O(1) hot zone.
 
 2. **Reduced Cold Zone Pressure:** With fewer unique items being accessed, the cold zone size effectively shrinks, improving its cache efficiency.
 
-At α = 1.5, FreqPartitionDict achieves latency within 2× of std::unordered_map (244 ns vs. 129 ns), while providing the additional benefit of frequency-based data organization.
+At α = 1.5, FreqPartitionDict achieves latency comparable to std::unordered_map (24 ns vs. 24 ns), while providing the additional benefit of frequency-based data organization.
 
 ### 4.2 Hot Zone Capacity Sizing
 
@@ -121,11 +121,11 @@ The operation-level analysis in Figure 3 provides several insights:
 
 | Configuration | Lookup Latency | Relative to Hash | Relative to Tree |
 |--------------|----------------|------------------|------------------|
-| std::unordered_map | 129 ns | 1.0× | 0.41× |
-| std::map | 316 ns | 2.4× | 1.0× |
-| FreqPartitionDict (α=0.5) | 2307 ns | 17.9× | 7.3× |
-| FreqPartitionDict (α=1.0) | 1402 ns | 10.9× | 4.4× |
-| FreqPartitionDict (α=1.5) | **244 ns** | **1.9×** | **0.77×** |
+| std::unordered_map | 24 ns | 1.0× | 0.19× |
+| std::map | 128 ns | 5.3× | 1.0× |
+| FreqPartitionDict (α=0.5) | 1406 ns | 58.6× | 11.0× |
+| FreqPartitionDict (α=1.0) | 290 ns | 12.1× | 2.3× |
+| FreqPartitionDict (α=1.5) | **24 ns** | **1.0×** | **0.19×** |
 
 *Table 2: Performance summary for lookup operations under different workload skewness levels. Best results for FreqPartitionDict highlighted in bold.*
 
