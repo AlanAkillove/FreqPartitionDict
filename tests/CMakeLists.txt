@@ -4,6 +4,11 @@ target_link_libraries(test_correctness freq_partition_dict gtest_main)
 add_executable(test_properties test_properties.cpp)
 target_link_libraries(test_properties freq_partition_dict gtest_main)
 
+add_executable(test_optimized_versions test_optimized_versions.cpp)
+target_link_libraries(test_optimized_versions freq_partition_dict gtest_main)
+set_property(TARGET test_optimized_versions PROPERTY CXX_STANDARD 17)
+
 include(GoogleTest)
 gtest_discover_tests(test_correctness)
 gtest_discover_tests(test_properties)
+gtest_discover_tests(test_optimized_versions)

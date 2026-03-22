@@ -18,6 +18,7 @@
 - **完整统计**: 提供命中率、晋升/降级次数等详细统计信息
 - **纯头文件**: 模板实现，只需包含头文件即可使用
 - **教学友好**: 代码清晰，注释详尽，适合学习数据结构
+- **多版本支持**: 基础版、优化版、线程安全版满足不同需求
 
 ## 快速开始
 
@@ -138,23 +139,29 @@ int main() {
 
 ```
 freq_partition_dict/
-├── include/                    # 头文件
-│   ├── freq_partition_dict.hpp # 主类
-│   ├── hot_zone.hpp            # 热区实现
-│   └── cold_zone.hpp           # 冷区实现
-├── src/                        # 源文件（模板类，暂无）
-├── tests/                      # 单元测试
-│   ├── test_correctness.cpp    # 正确性测试
-│   └── test_properties.cpp     # 属性测试
-├── benchmarks/                 # 性能基准测试
-│   └── benchmark.cpp           # Google Benchmark
-├── examples/                   # 示例程序
-│   ├── basic_usage.cpp         # 基础用法
-│   └── zipf_demo.cpp           # Zipf 分布演示
-├── docs/                       # 文档
-│   ├── design.md               # 设计文档
-│   └── complexity.md           # 复杂度分析
-└── CMakeLists.txt              # 构建配置
+├── include/                              # 头文件
+│   ├── freq_partition_dict.hpp           # 主类（基础版）
+│   ├── hot_zone.hpp                      # 热区实现（基础版）
+│   ├── cold_zone.hpp                     # 冷区实现（基础版）
+│   ├── freq_partition_dict_optimized.hpp # 优化版
+│   ├── hot_zone_optimized.hpp            # 热区优化版（最小堆）
+│   ├── cold_zone_optimized.hpp           # 冷区优化版（自定义分配器）
+│   └── freq_partition_dict_threadsafe.hpp# 线程安全版
+├── src/                                  # 源文件（模板类，暂无）
+├── tests/                                # 单元测试
+│   ├── test_correctness.cpp              # 正确性测试
+│   ├── test_properties.cpp               # 属性测试
+│   └── test_optimized_versions.cpp       # 优化版本对比测试
+├── benchmarks/                           # 性能基准测试
+│   └── benchmark.cpp                     # Google Benchmark
+├── examples/                             # 示例程序
+│   ├── basic_usage.cpp                   # 基础用法
+│   └── zipf_demo.cpp                     # Zipf 分布演示
+├── docs/                                 # 文档
+│   ├── design.md                         # 设计文档
+│   ├── complexity.md                     # 复杂度分析
+│   └── optimized_versions.md             # 优化版本说明
+└── CMakeLists.txt                        # 构建配置
 ```
 
 ## API 参考
@@ -182,6 +189,30 @@ FreqPartitionDict(size_t hot_capacity = 128, size_t promote_threshold = 3);
 | `size()` | 返回总元素数 |
 | `hot_size()` | 返回热区元素数 |
 | `cold_size()` | 返回冷区元素数 |
+
+### 版本选择指南
+
+| 版本 | 头文件 | 适用场景 | 特点 |
+|-----|--------|---------|-----|
+| **基础版** | `freq_partition_dict.hpp` | 教学、学习 | 代码清晰，易于理解 |
+| **优化版** | `freq_partition_dict_optimized.hpp` | 生产环境（单线程） | 最小堆优化，性能更好 |
+| **线程安全版** | `freq_partition_dict_threadsafe.hpp` | 生产环境（多线程） | 读写锁，支持并发访问 |
+
+```cpp
+// 基础版 - 教学首选
+#include <freq_partition_dict.hpp>
+fpd::FreqPartitionDict<int, std::string> dict;
+
+// 优化版 - 性能优先
+#include <freq_partition_dict_optimized.hpp>
+fpd::FreqPartitionDictOptimized<int, std::string> dict;
+
+// 线程安全版 - 并发场景
+#include <freq_partition_dict_threadsafe.hpp>
+fpd::FreqPartitionDictThreadSafe<int, std::string> dict;
+```
+
+详见 [docs/optimized_versions.md](docs/optimized_versions.md)
 
 #### 统计方法
 
