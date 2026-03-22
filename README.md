@@ -17,7 +17,7 @@
 - **频率淘汰**: 热区满时淘汰访问频率最低的元素
 - **完整统计**: 提供命中率、晋升/降级次数等详细统计信息
 - **纯头文件**: 模板实现，只需包含头文件即可使用
-- **教学友好**: 代码清晰，注释详尽，适合学习数据结构
+- **清晰易懂**: 代码结构清晰，注释详尽，便于理解和使用
 - **多版本支持**: 基础版、优化版、线程安全版满足不同需求
 
 ## 快速开始
@@ -199,7 +199,7 @@ FreqPartitionDict(size_t hot_capacity = 128, size_t promote_threshold = 3);
 | **线程安全版** | `freq_partition_dict_threadsafe.hpp` | 生产环境（多线程） | 读写锁，支持并发访问 |
 
 ```cpp
-// 基础版 - 教学首选
+// 基础版 - 入门首选
 #include <freq_partition_dict.hpp>
 fpd::FreqPartitionDict<int, std::string> dict;
 
@@ -227,15 +227,16 @@ fpd::FreqPartitionDictThreadSafe<int, std::string> dict;
 | `demotions()` | 降级次数 |
 | `reset_stats()` | 重置统计 |
 
-## 学习资源
+## 技术参考
 
-本项目适合用于学习以下数据结构和算法概念：
+本项目涉及以下核心概念：
 
-- **哈希表**: 热区使用 `std::unordered_map` 的实现
-- **平衡树**: 冷区使用 `std::map`（红黑树）的实现
-- **缓存替换策略**: LRU、LFU 与频率分区的对比
+- **哈希表**: 热区使用 `std::unordered_map` 的实现原理
+- **平衡树**: 冷区使用 `std::map`（红黑树）的实现原理
+- **缓存替换策略**: LRU、LFU 与频率分区的对比分析
 - **工作集模型**: 程序访问局部性原理
-- **Zipf 分布**: 真实世界访问模式的建模
+- **Zipf 分布**: 真实世界访问模式的建模方法
+- **性能分析**: 完整的性能评估报告见 [docs/performance_analysis.md](docs/performance_analysis.md)
 
 ## 贡献指南
 

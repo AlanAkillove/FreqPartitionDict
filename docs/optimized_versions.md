@@ -6,7 +6,7 @@
 
 | 版本 | 文件 | 特点 | 适用场景 |
 |-----|------|-----|---------|
-| 基础版 | `freq_partition_dict.hpp` | 代码清晰，易于理解 | 教学、学习 |
+| 基础版 | `freq_partition_dict.hpp` | 代码清晰，易于理解 | 入门使用、代码阅读 |
 | 优化版 | `freq_partition_dict_optimized.hpp` | 最小堆、延迟删除 | 生产环境 |
 | 线程安全版 | `freq_partition_dict_threadsafe.hpp` | 读写锁、批量操作 | 多线程环境 |
 
@@ -138,7 +138,7 @@ void get_batch(const Container& keys, std::vector<std::optional<V>>& results);
 
 ## 6. 使用建议
 
-### 教学场景
+### 入门使用
 ```cpp
 #include <freq_partition_dict.hpp>
 // 使用基础版，代码清晰易懂
