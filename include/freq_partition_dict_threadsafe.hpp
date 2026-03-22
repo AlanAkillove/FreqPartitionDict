@@ -18,7 +18,7 @@ public:
         : dict_(hot_capacity, promote_threshold) {}
 
     std::optional<V> get(const K& key) {
-        std::unique_lock<std::shared_mutex> lock(mutex_);
+        std::shared_lock<std::shared_mutex> lock(mutex_);
         return dict_.get(key);
     }
 

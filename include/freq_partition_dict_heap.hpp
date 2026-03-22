@@ -1,6 +1,6 @@
 #pragma once
 
-#include "hot_zone.hpp"
+#include "hot_zone_heap.hpp"
 #include "cold_zone.hpp"
 #include <optional>
 #include <cstddef>
@@ -8,35 +8,43 @@
 namespace fpd {
 
 /**
- * @brief Frequency-Partitioned Dictionary / 频率分区字典
+ * @brief Optimized FreqPartitionDict with Heap-based Hot Zone
+ *        基于堆优化热区的频率分区字典
  * 
- * A hybrid dictionary that partitions data into hot and cold zones based on access frequency.
- * 一种基于访问频率将数据分区为热区和冷区的混合字典。
+ * This version uses a min-heap for the hot zone to achieve O(log H) eviction
+ * instead of O(H) linear scanning.
+ * 此版本使用最小堆实现热区，达到 O(log H) 淘汰复杂度，而非 O(H) 线性扫描。
  * 
- * Hot Zone: std::unordered_map for O(1) lookup of frequently accessed items
- * 热区：使用 std::unordered_map 实现高频项的 O(1) 查找
+ * Performance comparison with base version:
+ * - Lookup: O(1) same / 相同
+ * - Insert: O(log H) vs O(1) / 稍慢
+ * - Eviction: O(log H) vs O(H) / 显著更快（H > 64 时）
+ * - Increase frequency: O(log H) vs O(1) / 稍慢
  * 
- * Cold Zone: std::map for O(log n) lookup of infrequently accessed items
- * 冷区：使用 std::map 实现低频项的 O(log n) 查找
+ * Recommended when H > 64 for better overall performance.
+ * 建议当 H > 64 时使用以获得更好的整体性能。
  */
 template<typename K, typename V>
-class FreqPartitionDict {
+class FreqPartitionDictHeap {
 private:
-    HotZone<K, V> hot_zone_;           // Hot zone - high frequency items / 热区 - 高频项
-    ColdZone<K, V> cold_zone_;         // Cold zone - low frequency items / 冷区 - 低频项
-    size_t hot_capacity_;              // Maximum hot zone capacity / 热区最大容量
-    size_t promote_threshold_;         // Access threshold for promotion / 晋升访问阈值
+    HotZoneHeap<K, V> hot_zone_;           // Hot zone with heap / 堆优化热区
+    ColdZone<K, V> cold_zone_;             // Cold zone / 冷区
+    size_t hot_capacity_;                  // Maximum hot zone capacity / 热区最大容量
+    size_t promote_threshold_;             // Access threshold for promotion / 晋升访问阈值
 
     // Statistics / 统计信息
-    size_t hot_hits_ = 0;              // Hot zone hit count / 热区命中次数
-    size_t cold_hits_ = 0;             // Cold zone hit count / 冷区命中次数
-    size_t misses_ = 0;                // Miss count / 未命中次数
-    size_t promotions_ = 0;            // Promotion count / 晋升次数
-    size_t demotions_ = 0;             // Demotion count / 降级次数
+    size_t hot_hits_ = 0;                  // Hot zone hit count / 热区命中次数
+    size_t cold_hits_ = 0;                 // Cold zone hit count / 冷区命中次数
+    size_t misses_ = 0;                    // Miss count / 未命中次数
+    size_t promotions_ = 0;                // Promotion count / 晋升次数
+    size_t demotions_ = 0;                 // Demotion count / 降级次数
 
     /**
      * @brief Promote item from cold zone to hot zone
      *        将项从冷区晋升到热区
+     * 
+     * Time complexity: O(log H) for eviction
+     * 时间复杂度：O(log H) 用于淘汰
      */
     void promote(const K& key) {
         // Skip if hot zone capacity is zero / 如果热区容量为0，跳过晋升
@@ -51,7 +59,7 @@ private:
 
         // Evict lowest frequency item if hot zone is full / 如果热区已满，淘汰频率最低的项
         if (hot_zone_.is_full()) {
-            auto [min_key, min_freq] = hot_zone_.get_min_freq_key();
+            auto [min_key, min_freq] = hot_zone_.pop_min();
             V min_value = hot_zone_.at(min_key);
             hot_zone_.erase(min_key);
             cold_zone_.insert(min_key, min_value, min_freq);
@@ -69,7 +77,7 @@ public:
      * @param hot_capacity Hot zone capacity (default: 128) / 热区容量（默认：128）
      * @param promote_threshold Access threshold for promotion (default: 3) / 晋升访问阈值（默认：3）
      */
-    FreqPartitionDict(size_t hot_capacity = 128, size_t promote_threshold = 3)
+    FreqPartitionDictHeap(size_t hot_capacity = 128, size_t promote_threshold = 3)
         : hot_zone_(hot_capacity)
         , hot_capacity_(hot_capacity)
         , promote_threshold_(promote_threshold) {}
@@ -78,6 +86,11 @@ public:
      * @brief Lookup item by key / 按键查找项
      * @param key Key to lookup / 要查找的键
      * @return std::optional<V> Value if found, nullopt otherwise / 找到返回值，否则返回 nullopt
+     * 
+     * Time complexity:
+     * - Hot hit: O(1)
+     * - Cold hit: O(log n) lookup + O(log H) frequency update
+     * - Miss: O(1) + O(log n)
      */
     std::optional<V> get(const K& key) {
         // Check hot zone first / 首先检查热区
@@ -122,6 +135,8 @@ public:
      * @brief Insert or update key-value pair / 插入或更新键值对
      * @param key Key to insert / 要插入的键
      * @param value Value to insert / 要插入的值
+     * 
+     * Time complexity: O(log H) for hot zone, O(log n) for cold zone
      */
     void insert(const K& key, const V& value) {
         if (hot_zone_.contains(key)) {
@@ -169,6 +184,16 @@ public:
 
     void set_promote_threshold(size_t threshold) { promote_threshold_ = threshold; }
 
+    /**
+     * @brief Reserve capacity / 预分配容量
+     * @param hot_capacity Hot zone capacity to reserve / 热区预分配容量
+     * @param cold_capacity Cold zone capacity to reserve / 冷区预分配容量
+     */
+    void reserve(size_t hot_capacity, size_t cold_capacity) {
+        hot_zone_.reserve(hot_capacity);
+        // Note: std::map doesn't have reserve, but we could use a custom allocator
+    }
+
     // Statistics / 统计信息
     double hot_hit_rate() const {
         size_t total = hot_hits_ + cold_hits_ + misses_;
@@ -190,80 +215,7 @@ public:
         hot_hits_ = 0;
         cold_hits_ = 0;
         misses_ = 0;
-    }
-
-    // Iterator support / 迭代器支持
-    /**
-     * @brief Iterator for traversing all entries / 遍历所有条目的迭代器
-     * 
-     * Iterates over hot zone first, then cold zone.
-     * 先遍历热区，再遍历冷区。
-     */
-    class iterator {
-    public:
-        using iterator_category = std::forward_iterator_tag;
-        using value_type = std::pair<const K, V>;
-        using difference_type = std::ptrdiff_t;
-        using pointer = value_type*;
-        using reference = value_type&;
-
-    private:
-        using HotIterator = typename HotZone<K, V>::const_iterator;
-        using ColdIterator = typename ColdZone<K, V>::const_iterator;
-
-        const FreqPartitionDict* dict_;
-        HotIterator hot_it_;
-        HotIterator hot_end_;
-        ColdIterator cold_it_;
-        ColdIterator cold_end_;
-        bool in_hot_zone_;
-
-    public:
-        iterator(const FreqPartitionDict* dict, HotIterator hot_it, HotIterator hot_end,
-                 ColdIterator cold_it, ColdIterator cold_end, bool in_hot)
-            : dict_(dict), hot_it_(hot_it), hot_end_(hot_end),
-              cold_it_(cold_it), cold_end_(cold_end), in_hot_zone_(in_hot) {}
-
-        std::pair<K, V> operator*() const {
-            if (in_hot_zone_) {
-                return {hot_it_->first, hot_it_->second.value};
-            } else {
-                return {cold_it_->first, cold_it_->second.first};
-            }
-        }
-
-        iterator& operator++() {
-            if (in_hot_zone_) {
-                ++hot_it_;
-                if (hot_it_ == hot_end_) {
-                    in_hot_zone_ = false;
-                }
-            } else {
-                ++cold_it_;
-            }
-            return *this;
-        }
-
-        bool operator!=(const iterator& other) const {
-            if (in_hot_zone_ != other.in_hot_zone_) return true;
-            if (in_hot_zone_) return hot_it_ != other.hot_it_;
-            return cold_it_ != other.cold_it_;
-        }
-
-        bool operator==(const iterator& other) const {
-            return !(*this != other);
-        }
-    };
-
-    iterator begin() const {
-        return iterator(this, hot_zone_.begin(), hot_zone_.end(),
-                       cold_zone_.begin(), cold_zone_.end(),
-                       !hot_zone_.empty());
-    }
-
-    iterator end() const {
-        return iterator(this, hot_zone_.end(), hot_zone_.end(),
-                       cold_zone_.end(), cold_zone_.end(), false);
+        // Note: promotions_ and demotions_ are cumulative and not reset
     }
 };
 

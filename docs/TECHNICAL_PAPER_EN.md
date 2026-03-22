@@ -200,6 +200,84 @@ The key insight is that workload characteristics profoundly impact data structur
 
 ---
 
+## Appendix A: Theoretical Analysis
+
+### A.1 Expected Lookup Time Analysis
+
+The expected lookup time for FreqPartitionDict can be expressed as:
+
+$$E[T_{lookup}] = P_{hot} \cdot O(1) + (1 - P_{hot}) \cdot O(\log n)$$
+
+where $P_{hot}$ is the hot zone hit rate. For Zipfian distributions, the hot zone hit rate is:
+
+$$P_{hot} = \sum_{i=1}^{H} \frac{i^{-\alpha}}{\sum_{j=1}^{N} j^{-\alpha}} = \frac{H_{H,\alpha}}{H_{N,\alpha}}$$
+
+where $H_{n,\alpha}$ is the generalized harmonic number. As $N \to \infty$:
+
+$$H_{n,\alpha} \approx \begin{cases}
+\frac{n^{1-\alpha}}{1-\alpha} & \alpha < 1 \\
+\ln n + \gamma & \alpha = 1 \\
+\zeta(\alpha) & \alpha > 1
+\end{cases}$$
+
+Therefore, for highly skewed workloads with $\alpha > 1$:
+
+$$P_{hot} \approx \frac{\zeta(\alpha) - \sum_{i=H+1}^{\infty} i^{-\alpha}}{\zeta(\alpha)} = 1 - O(H^{1-\alpha})$$
+
+This shows that as hot zone capacity $H$ increases, the hit rate rapidly approaches 1.
+
+### A.2 Impact of Promotion Threshold
+
+Let $\tau$ be the promotion threshold, requiring $\tau$ accesses for an element to be promoted from cold to hot zone. This introduces the following trade-offs:
+
+**Latency vs. Stability**:
+- Smaller $\tau$: Faster adaptation to workload changes, but may cause hot zone thrashing
+- Larger $\tau$: More stable hot zone, but increased latency for new hot items
+
+**Optimal Threshold Analysis**:
+
+Assuming workload changes with period $T$ and hot item duration $t_h$, the optimal threshold should satisfy:
+
+$$\tau_{opt} \approx \frac{t_h}{T} \cdot f_{avg}$$
+
+where $f_{avg}$ is the average access frequency.
+
+### A.3 Space Complexity Analysis
+
+| Component | Space Complexity | Notes |
+|-----------|------------------|-------|
+| Hot Zone | $O(H)$ | Hash table + frequency counter |
+| Cold Zone | $O(N)$ | Red-black tree + frequency counter |
+| Total | $O(N + H)$ | Typically $H \ll N$ |
+
+Compared to standard hash tables $O(N)$, FreqPartitionDict's space overhead comes from:
+- Frequency counters: 8 extra bytes per element
+- Dual-zone storage: Cold zone uses tree structure with pointer overhead
+
+### A.4 Amortized Analysis
+
+For a sequence of $m$ operations, let:
+- $n_i$: number of elements after $i$-th operation
+- $p_i$: whether $i$-th operation is a promotion
+
+Total time complexity:
+
+$$T_{total} = \sum_{i=1}^{m} O(1) + \sum_{i=1}^{m} p_i \cdot O(\log H)$$
+
+In steady state, promotion rate equals demotion rate, and:
+
+$$\sum_{i=1}^{m} p_i \approx m \cdot (1 - P_{hot}) \cdot P_{promote}$$
+
+where $P_{promote}$ is the probability that a cold zone element reaches the promotion threshold.
+
+Therefore, the amortized time complexity is:
+
+$$T_{amortized} = O(1) + (1 - P_{hot}) \cdot P_{promote} \cdot O(\log H)$$
+
+For highly skewed workloads ($P_{hot} \approx 1$), the amortized complexity approaches $O(1)$.
+
+---
+
 ## Data Availability
 
 All benchmarks are reproducible using the following commands:
