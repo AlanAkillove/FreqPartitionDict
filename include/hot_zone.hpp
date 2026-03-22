@@ -152,6 +152,10 @@ public:
         data_.clear();
     }
 
+    void reserve(size_t capacity) {
+        data_.reserve(capacity);
+    }
+
     /**
      * @brief Check if empty / 检查是否为空
      * @return bool True if empty / 为空返回 true

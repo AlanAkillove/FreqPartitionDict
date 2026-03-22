@@ -192,6 +192,29 @@ public:
         misses_ = 0;
     }
 
+    struct MemoryStats {
+        size_t hot_zone_bytes;
+        size_t cold_zone_bytes;
+        size_t overhead_bytes;
+        size_t total_bytes() const { 
+            return hot_zone_bytes + cold_zone_bytes + overhead_bytes; 
+        }
+    };
+
+    MemoryStats memory_usage() const {
+        MemoryStats stats;
+        stats.hot_zone_bytes = hot_zone_.size() * (sizeof(K) + sizeof(V) + sizeof(size_t) + 8);
+        stats.cold_zone_bytes = cold_zone_.size() * (sizeof(K) + sizeof(V) + sizeof(size_t) + 24);
+        stats.overhead_bytes = sizeof(hot_capacity_) + sizeof(promote_threshold_) +
+                               sizeof(hot_hits_) + sizeof(cold_hits_) +
+                               sizeof(misses_) + sizeof(promotions_) + sizeof(demotions_);
+        return stats;
+    }
+
+    void reserve(size_t hot_capacity) {
+        hot_zone_.reserve(hot_capacity);
+    }
+
     // Iterator support / 迭代器支持
     /**
      * @brief Iterator for traversing all entries / 遍历所有条目的迭代器
