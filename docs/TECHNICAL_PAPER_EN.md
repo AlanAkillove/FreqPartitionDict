@@ -1,6 +1,6 @@
 # Frequency-Partitioned Dictionary: A Hybrid Data Structure for Skewed Workloads
 
-**Abstract.** We present FreqPartitionDict, a hybrid dictionary structure that dynamically partitions data based on access frequency. Through comprehensive benchmarking on synthetic workloads with varying skewness characteristics (Zipf α ∈ [0.5, 1.5]), we demonstrate that the proposed structure achieves near performance parity with hash tables under highly skewed access patterns (α = 1.5), while providing O(log n) worst-case guarantees and frequency-aware data organization. Our analysis reveals that a hot zone capacity of 6–10% of the working set size maximizes cache efficiency, yielding up to 95% latency reduction as workload skewness increases. All experiments are conducted in Release mode with compiler optimizations enabled (-O3).
+**Abstract.** We present FreqPartitionDict, a hybrid dictionary structure that dynamically partitions data based on access frequency. Through comprehensive benchmarking on synthetic workloads with varying skewness characteristics (Zipf α ∈ [0.5, 1.5]), we demonstrate that the proposed structure achieves near performance parity with hash tables under highly skewed access patterns (α = 1.5), while providing O(log n) worst-case guarantees and frequency-aware data organization. Our analysis reveals that a hot zone capacity of 6–10% of the working set size maximizes cache efficiency, yielding up to 96% latency reduction as workload skewness increases. All experiments are conducted in Release mode with compiler optimizations enabled (-O3).
 
 **Keywords:** data structures, cache management, frequency-based partitioning, skewed workloads
 
@@ -61,6 +61,65 @@ Regarding promotion policy, items accumulate access counts in the cold zone; upo
 | Eviction (optimized) | O(log H) | O(log n) | O(log H) |
 
 *Table 2: Time complexity of core operations. H denotes hot zone capacity.*
+
+### 3.3 Core Algorithms
+
+**Algorithm 1: Lookup Operation**
+
+```
+Input: key - lookup key
+Output: value or NOT_FOUND
+
+1. if hot_zone.contains(key) then
+2.     increment_hot_access_count(key)
+3.     return hot_zone.get(key)
+4. else if cold_zone.contains(key) then
+5.     freq ← cold_zone.get_frequency(key)
+6.     freq ← freq + 1
+7.     if freq ≥ promote_threshold then
+8.         PROMOTE-TO-HOT-ZONE(key)
+9.     return cold_zone.get(key)
+10. return NOT_FOUND
+```
+
+**Algorithm 2: Promotion Operation**
+
+```
+Input: key - key to be promoted
+
+1. if hot_zone.size() ≥ hot_capacity then
+2.     victim ← FIND-MIN-FREQUENCY-KEY(hot_zone)
+3.     DEMOTE-TO-COLD-ZONE(victim)
+4. value ← cold_zone.get(key)
+5. freq ← cold_zone.get_frequency(key)
+6. cold_zone.erase(key)
+7. hot_zone.insert(key, value, freq)
+8. promotions ← promotions + 1
+```
+
+**Algorithm 3: Eviction Operation (Basic Version)**
+
+```
+Input: zone - hot zone
+Output: key with minimum frequency
+
+1. min_freq ← ∞
+2. min_key ← null
+3. for each (key, value, freq) in zone do
+4.     if freq < min_freq then
+5.         min_freq ← freq
+6.         min_key ← key
+7. return min_key
+```
+
+**Algorithm 4: Eviction Operation (Heap-Optimized Version)**
+
+```
+Input: min_heap - min-heap
+Output: key with minimum frequency
+
+1. return min_heap.extract_min()
+```
 
 ---
 
@@ -155,6 +214,14 @@ The current implementation has several limitations. First, the baseline version 
 ## 8. Conclusion
 
 FreqPartitionDict demonstrates that incorporating access frequency awareness into dictionary design yields significant benefits for skewed workloads. Our evaluation shows that under realistic access patterns (Zipf α = 1.5), the structure achieves latency approaching hash tables (24 ns vs. 5 ns) while maintaining O(log n) worst-case guarantees and providing valuable frequency-based organization for analytics and cache management. The key insight is that workload characteristics profoundly impact data structure performance: no single implementation dominates all scenarios, but hybrid approaches that adapt to observed patterns can bridge the gap between theoretical complexity and practical efficiency.
+
+### 8.1 Limitations
+
+The current implementation has several limitations. First, the base version uses a single-threaded design, requiring external synchronization for concurrent access (we provide a separate thread-safe variant). Second, the fixed promotion threshold cannot dynamically adapt to changing workload characteristics. Third, the current implementation lacks disk backup storage or crash recovery mechanisms. Finally, under uniform access patterns (α ≈ 0), performance is inferior to standard containers.
+
+### 8.2 Future Work
+
+We plan to explore the following directions in future versions. Regarding adaptive promotion threshold, we will implement adaptive threshold adjustment based on workload characteristics, monitor the balance between promotion and demotion rates, and dynamically adjust thresholds based on hit rate changes. For distributed extension, we will explore cross-node hot zone synchronization strategies, combine consistent hashing with frequency partitioning, and develop distributed frequency statistics aggregation methods. For persistence support, we will add hot/cold zone state serialization, incremental checkpoint mechanisms, and crash recovery with state reconstruction. For smarter eviction strategies, we will explore hybrid strategies combining LRU and LFU, partition management based on SLRU (Segmented LRU), and frequency statistics considering access time decay.
 
 ---
 
