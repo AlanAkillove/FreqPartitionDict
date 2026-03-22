@@ -1,8 +1,8 @@
 Performance Summary
 ==================================================
 
-std::unordered_map (Zipf)                        24.2 ns
-std::map (Zipf)                                 127.8 ns
-FreqPartitionDict (Zipf, H=128)                1406.2 ns
-FreqPartitionDict (Uniform)                    3302.2 ns
-FreqPartitionDict (¦Á=1.5)                       244.4 ns
+std::unordered_map (Zipf)                         4.7 ns
+std::map (Zipf)                                  18.4 ns
+FreqPartitionDict (Zipf, H=128)                 273.7 ns
+FreqPartitionDict (Uniform)                     763.8 ns
+FreqPartitionDict (¦Á=1.5)                        25.3 ns
