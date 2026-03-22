@@ -215,6 +215,52 @@ public:
         hot_zone_.reserve(hot_capacity);
     }
 
+    template<typename Iterator>
+    void insert_batch(Iterator begin, Iterator end) {
+        for (auto it = begin; it != end; ++it) {
+            insert(it->first, it->second);
+        }
+    }
+
+    template<typename Container>
+    void get_batch(const Container& keys, std::vector<std::optional<V>>& results) {
+        results.clear();
+        results.reserve(keys.size());
+        for (const auto& key : keys) {
+            results.push_back(get(key));
+        }
+    }
+
+    template<typename Iterator>
+    void erase_batch(Iterator begin, Iterator end) {
+        for (auto it = begin; it != end; ++it) {
+            erase(*it);
+        }
+    }
+
+    template<typename Iterator>
+    std::vector<std::pair<K, V>> get_hot_items(Iterator begin, Iterator end) const {
+        std::vector<std::pair<K, V>> result;
+        for (auto it = begin; it != end; ++it) {
+            if (hot_zone_.contains(*it)) {
+                auto val = hot_zone_.get(*it);
+                if (val) {
+                    result.emplace_back(*it, *val);
+                }
+            }
+        }
+        return result;
+    }
+
+    std::vector<std::pair<K, V>> get_all_hot_items() const {
+        std::vector<std::pair<K, V>> result;
+        result.reserve(hot_zone_.size());
+        for (auto it = hot_zone_.begin(); it != hot_zone_.end(); ++it) {
+            result.emplace_back(it->first, it->second.value);
+        }
+        return result;
+    }
+
     // Iterator support / 迭代器支持
     /**
      * @brief Iterator for traversing all entries / 遍历所有条目的迭代器
